@@ -1,0 +1,30 @@
+#pragma once
+#include "trishul.hpp"
+#include "trishul/Formats.hpp"
+
+#include "nlohmann/json.hpp"
+
+class BSON : public TrishulFormats {
+	using json = nlohmann::json;
+	private:
+		path_t       odir;
+		string_t     filename;
+		char         cfile[256];
+		json         j;
+		Unsigned_t   nsamps;
+	public:
+		BSON (const string_t& _dir) : odir(_dir) {}
+		BSON () : odir("./") {}
+		~BSON () {}
+
+		bool ReadFromFile (const string_t&);
+		bool WriteToFile ();
+		bool WriteToFile (const string_t&);
+
+		// override
+		bool ReadHeader (Header_t& , Trigger_t& ) override;
+		bool WriteHeader (const Header_t&, const Trigger_t&) override;
+		Unsigned_t ReadData  (PtrByte_t, Unsigned_t )override;
+		Unsigned_t WriteData (PtrByte_t, Unsigned_t ) override;
+};
+
