@@ -13,8 +13,8 @@ using Unsigned_t = uint64_t;
 using float_t    = float;
 using double_t   = double;
 using Byte_t     = unsigned char;
-using PtrByte_t  = Byte_t*;
-using PtrFloat_t = float_t*; 
+//using PtrByte_t  = Byte_t*;
+//using PtrFloat_t = float_t*; 
 
 using path_t     = fs::path;
 using string_t   = std::string;
@@ -22,3 +22,5 @@ using string_t   = std::string;
 
 // vector
 using FloatVector_t = std::vector<float_t>;
+using ByteVector_t = std::vector<Byte_t>;
+

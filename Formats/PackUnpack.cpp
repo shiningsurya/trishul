@@ -64,94 +64,74 @@ static inline void unpack8bit (float_t& a, const Byte_t& dc) {
 	a  = (float_t) (dc);
 }
 // 2BIT
-Unsigned_t Pack2Bit (
-		PtrFloat_t in,
-		const Unsigned_t& size,
-		PtrByte_t out
-	) {
+void Unpack2Bit (const ByteVector_t& bin, FloatVector_t& fout) {
+	// reserve
+	fout.reserve (bin.size() * 8 / 2);
+	// work
+	float_t a,b,c,d;
+	for (const Byte_t& dc : bin) {
+		::unpack2bit (a, b, c, d, dc);
+		fout.push_back (a);
+		fout.push_back (b);
+		fout.push_back (c);
+		fout.push_back (d);
+	}
+}
+void Pack2Bit  (const FloatVector_t& fin, ByteVector_t& bout) {
+	// reserve
+	bout.reserve (fin.size() * 2 / 8);
+	// work
 	Unsigned_t ii = 0;
 	float_t a,b,c,d;
-	for(Unsigned_t it = 0; it < size;) {
-		a = in[it++]; b = in[it++];
-		c = in[it++]; d = in[it++];
-		out[ii++] = ::pack2bit(a,b,c,d);
+	for(Unsigned_t it = 0; it < fin.size();) {
+		a = fin[it++]; b = fin[it++];
+		c = fin[it++]; d = fin[it++];
+		bout.push_back( ::pack2bit(a,b,c,d) );
 	}
-	return ii;
 }
 
-Unsigned_t Unpack2Bit (
-		PtrByte_t in,
-		const Unsigned_t& size,
-		PtrFloat_t out
-	) {
-	Unsigned_t ii = 0;
-	Byte_t dc;
-	float_t a,b,c,d;
-	for(Unsigned_t it = 0; it < size;) {
-		dc = in[it++];
-		::unpack2bit(a,b,c,d,dc);
-		out[ii++] = a; out[ii++] = b;
-		out[ii++] = c; out[ii++] = d;
-	}
-	return ii;
-}
 // 4BIT
-Unsigned_t Pack4Bit (
-		PtrFloat_t in,
-		const Unsigned_t& size,
-		PtrByte_t out
-	) {
+void Unpack4Bit (const ByteVector_t& bin, FloatVector_t& fout) {
+	// reserve
+	fout.reserve (bin.size() * 8 / 4);
+	// work
+	float_t a,b;
+	for (const Byte_t& dc : bin) {
+		::unpack4bit (a, b, dc);
+		fout.push_back (a);
+		fout.push_back (b);
+	}
+};
+void Pack4Bit  (const FloatVector_t& fin, ByteVector_t& bout) {
+	// reserve
+	bout.reserve (fin.size() * 2 / 4);
+	// work
 	Unsigned_t ii = 0;
 	float_t a,b;
-	for(Unsigned_t it = 0; it < size;) {
-		a = in[it++]; b = in[it++];
-		out[ii++] = ::pack4bit(a,b);
+	for(Unsigned_t it = 0; it < fin.size();) {
+		a = fin[it++]; b = fin[it++];
+		bout.push_back( ::pack4bit(a,b) );
 	}
-	return ii;
-}
-
-Unsigned_t Unpack4Bit (
-		PtrByte_t in,
-		const Unsigned_t& size,
-		PtrFloat_t out
-	) {
-	Unsigned_t ii = 0;
-	Byte_t dc;
-	float_t a,b;
-	for(Unsigned_t it = 0; it < size;) {
-		dc = in[it++];
-		::unpack4bit(a,b,dc);
-		out[ii++] = a; out[ii++] = b;
-	}
-	return ii;
 }
 // 8BIT
-Unsigned_t Pack8Bit (
-		PtrFloat_t in,
-		const Unsigned_t& size,
-		PtrByte_t out
-	) {
+void Unpack8Bit (const ByteVector_t& bin, FloatVector_t& fout) {
+	// reserve
+	fout.reserve (bin.size() * 8 / 8);
+	// work
+	float_t a;
+	for (const Byte_t& dc : bin) {
+		::unpack8bit (a, dc);
+		fout.push_back (a);
+	}
+};
+void Pack8Bit  (const FloatVector_t& fin, ByteVector_t& bout) {
+	// reserve
+	bout.reserve (fin.size() * 8 / 8);
+	// work
 	Unsigned_t ii = 0;
 	float_t a;
-	for(Unsigned_t it = 0; it < size;) {
-		a = in[it++];
-		out[ii++] = ::pack8bit(a);
+	for(Unsigned_t it = 0; it < fin.size();) {
+		a = fin[it++];
+		bout.push_back( ::pack8bit(a) );
 	}
-	return ii;
-}
-
-Unsigned_t Unpack8Bit (
-		PtrByte_t in,
-		const Unsigned_t& size,
-		PtrFloat_t out
-	) {
-	Unsigned_t ii = 0;
-	Byte_t dc;
-	float_t a,b,c,d;
-	for(Unsigned_t it = 0; it < size;) {
-		dc = in[it++];
-		::unpack8bit(a, dc);
-		out[ii++] = a;
-	}
-	return ii;
 }

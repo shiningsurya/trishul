@@ -15,20 +15,20 @@ void Incoherent::CreatePlan (
 }
 
 void Incoherent::Execute (
-		PtrFloat_t f, Unsigned_t nsamps,
-		PtrFloat_t o
+		const FloatVector_t& f, Unsigned_t nsamps,
+		FloatVector_t& o
 	) {
 	Unsigned_t idx = 0;
 	// This is for single DM case ONLY!
 	for (Unsigned_t i = 0; i < nsamps; i++) {
 		for (unsigned_t j = 0; j < nchans; j++) {
 			idx = nchans * (i + idelays[j]) + j;
-			o[nchans*i + j] = f[idx];
+			o.push_back (f[idx]);
 		}
 	}
 }
 
 void Incoherent::Execute (
-		PtrByte_t f, Unsigned_t nsamps,
-		PtrByte_t o
+		const ByteVector_t& f, Unsigned_t nsamps,
+		ByteVector_t& o
 	) {}

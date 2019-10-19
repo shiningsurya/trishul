@@ -11,27 +11,27 @@ class TrishulDedisperser {
 		// state
 		bool               _is_plan_initialized;
 		// search parameters
-		float_t            dm_low;
-		float_t            dm_high;
-		PtrFloat_t         dm_list;
-		unsigned_t         dm_count;
+		FloatVector_t      dm_list;
 		// single dm
 		float_t                 single_dm;
 		std::vector<Unsigned_t> idelays;
 	public:
 		virtual void CreatePlan (const double_t, const unsigned_t, const float_t, const float_t) = 0;
 		
-		virtual void Execute (PtrFloat_t, Unsigned_t, PtrFloat_t) = 0;
-		virtual void Execute (PtrByte_t,  Unsigned_t, PtrByte_t) = 0;
+		virtual void Execute (const FloatVector_t&, Unsigned_t, FloatVector_t&) = 0;
+		virtual void Execute (const ByteVector_t&,  Unsigned_t, ByteVector_t&) = 0;
 
 		void Delays (float_t _dm);
 
-		void SetDM (const float_t a, const float_t b) noexcept { 
-			dm_low = a; dm_high = b;
+		void SetDM (const float_t a, const float_t b, const unsigned_t n) noexcept { 
+			float_t start = a;
+			float_t step = (b - a) / n;
+			// 
+			dm_list.push_back (start);
+			for (unsigned_t i = 1; i < n; i++,start+=step) dm_list.push_back (start);
 		}
 
 		void SetDM (const FloatVector_t& fv) noexcept {
-			dm_list = new float[fv.size()];
-			std::copy (fv.begin(), fv.end(), dm_list);
+			dm_list = fv;
 		} 
 };

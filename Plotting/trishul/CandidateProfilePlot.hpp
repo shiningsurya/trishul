@@ -36,12 +36,12 @@ class CandidateProfilePlot : protected TrishulPlotting {
 		float_t      xxmax;
 		float_t      dd_range;
 		// plot
-		PtrFloat_t   fb_tshape;
-		PtrFloat_t   fb_fshape;
-		PtrFloat_t   fb;
-		Unsigned_t   fb_size;
-		PtrFloat_t   axtime_ptr;
-		PtrFloat_t   axfreq_ptr;
+		FloatVector_t   fb_tshape;
+		FloatVector_t   fb_fshape;
+		FloatVector_t   fb;
+		Unsigned_t      fb_size;
+		FloatVector_t   axtime;
+		FloatVector_t   axfreq;
 		// parameters
 		float_t      sn;
 		float_t      dm;
@@ -57,22 +57,19 @@ class CandidateProfilePlot : protected TrishulPlotting {
 		Unsigned_t   nsamps;
 	public:
 		CandidateProfilePlot (float_t _charh = 0.65);
-		~CandidateProfilePlot ();
+		~CandidateProfilePlot () = default;
 
 		void Read (const Header_t& h, const Trigger_t& t) override;
-		void Read (PtrFloat_t f, const Unsigned_t& nsamps) override;
+		void Read (const FloatVector_t& f, const Unsigned_t& nsamps) override;
 
 		void Plot (const string_t& filename) override;
 
-		template<typename T>
-		void __safe_malloc (T*&, Unsigned_t);
-
-		template<typename T>
-		void __safe_free (T*&);
-
 		template<typename It>
-		void __ranger (It i, unsigned_t off);
+		void __ranger (It i, It j);
 
 		template<typename T>
-		void __arange (T* ptr, T start, T step, Unsigned_t size);
+		void __arange (std::vector<T>& ptr, T start, T step, Unsigned_t size);
+
+		template<typename T>
+		void __zfill (std::vector<T>& ptr, Unsigned_t size);
 };

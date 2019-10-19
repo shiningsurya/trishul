@@ -9,29 +9,14 @@ ccp::CandidateProfilePlot (float_t _charh) : charh(_charh) {
 	std::fill (tr, tr + 6, 0.0f);
 	//
 	xxfac = 0.1f;	
-	// pointer initializing
-	fb_fshape  = nullptr;
-	fb_tshape  = nullptr;
-	fb         = nullptr;
-	axtime_ptr = nullptr;
-	axfreq_ptr = nullptr;
 	// chanout
 	chanout = 512;
 }
 
-ccp::~CandidateProfilePlot () {
-	__safe_free (fb);
-	__safe_free (fb_fshape);
-	__safe_free (fb_tshape);
-	__safe_free (axtime_ptr);
-	__safe_free (axfreq_ptr);
-
-}
-
 template<typename It>
-void ccp::__ranger (It i, unsigned_t off) {
-	auto min = *std::min_element (i, i + off);
-	auto max = *std::max_element (i, i + off);
+void ccp::__ranger (It i, It j) {
+	auto min = *std::min_element (i, j);
+	auto max = *std::max_element (i, j);
 
 	dd_range = max - min;
 
@@ -40,21 +25,17 @@ void ccp::__ranger (It i, unsigned_t off) {
 }
 
 template<typename T>
-void ccp::__safe_malloc (T*& ptr, Unsigned_t s) {
-	if (ptr) delete[] ptr;
-	ptr = new T[s]();
-}
-
-template<typename T>
-void ccp::__safe_free (T*& ptr) {
-	if (ptr) delete[] ptr;
-}
-
-template<typename T>
-void ccp::__arange (T* ptr, T start, T step, Unsigned_t size) {
-	ptr[0] = start;
+void ccp::__arange (std::vector<T>& ptr, T start, T step, Unsigned_t size) {
+	ptr.push_back (start);
 	for (Unsigned_t i = 1; i < size; i++) {
-		ptr[i] = ptr[i-1] + step;
+		ptr.push_back (ptr.back() + step);
+	}
+}
+
+template<typename T>
+void ccp::__zfill (std::vector<T>& ptr, Unsigned_t size) {
+	for (Unsigned_t i = 0; i < size; i++) {
+		ptr.push_back (0.0f);
 	}
 }
 
@@ -67,8 +48,8 @@ void ccp::Plot (const string_t& filename) {
 	// DE-DEDISPERSED WATERFALL
 	cpgsvp (0.1, 0.65, 0.1, 0.65);
 	cpgswin (
-			axtime_ptr[0], axtime_ptr[nsamps-1],
-			axfreq_ptr[0], axfreq_ptr[chanout-1]
+			axtime.front(), axtime.back(),
+			axfreq.front(), axfreq.back()
 	);
 	cpgbox ("BCN",0.0,0,"BCNV",0.0,0);
 	cpgsfs (1);
@@ -76,7 +57,7 @@ void ccp::Plot (const string_t& filename) {
 			heat_l.data(), heat_r.data(), 
 			heat_g.data(), heat_b.data(), 
 			heat_l.size(), constrast, brightness);
-	cpgimag (fb, chanout, nsamps,
+	cpgimag (fb.data(), chanout, nsamps,
 			1, chanout, 1, nsamps,
 			cmin, cmax, tr
 	);
@@ -86,19 +67,19 @@ void ccp::Plot (const string_t& filename) {
 	cpgsfs(1);
 	cpgsci(1); // color index
 	cpgsvp(0.65, 0.90, 0.1, 0.65); // bandshape
-	__ranger (fb_fshape, chanout);
-	cpgswin (xxmin, xxmax, axfreq_ptr[0], axfreq_ptr[chanout-1]);
+	__ranger (fb_fshape.cbegin(), fb_fshape.cend());
+	cpgswin (xxmin, xxmax, axfreq.front(), axfreq.back());
 	cpgbox("BCN",0.0,0,"BCV",0.0,0);
-	cpgline(chanout, fb_fshape, axfreq_ptr);
+	cpgline(chanout, fb_fshape.data(), axfreq.data());
 	cpgmtxt("B",2.5,.5,0.5,"Intensity (a.u.)"); // group at middle
 	cpgmtxt("T",-1*charh,.5,0.5, "Bandshape");
 	// TIMESHAPE
 	cpgsci (1); // color index
 	cpgsvp (0.1, 0.65, 0.65, 0.9); // fscrunched profile 
-	__ranger (fb_tshape, nsamps);
-	cpgswin (axtime_ptr[0], axtime_ptr[nsamps-1], xxmin, xxmax);
+	__ranger (fb_tshape.cbegin(), fb_tshape.cend());
+	cpgswin (axtime.front(), axtime.back(), xxmin, xxmax);
 	cpgbox ("BC",0.0,0,"BCNV",0.0,0);
-	cpgline (nsamps, axtime_ptr, fb_tshape); 
+	cpgline (nsamps, axtime.data(), fb_tshape.data()); 
 	cpgmtxt("R",1.2,0.5,0.5,"Intensity (a.u.)");
 	cpgmtxt("T",.3,.5,0.5, "De-Dispersed Integrated Profile and Waterfall");
 	cpgmtxt("T",2.0,0.0,0.5,group);
@@ -134,18 +115,15 @@ void ccp::Plot (const string_t& filename) {
 
 void ccp::Read (const Header_t& h, const Trigger_t& t) {
 	// frequency axis
-	__safe_malloc (axfreq_ptr, chanout);
-	__arange (axfreq_ptr, (float_t)h.fch1, (float_t)h.foff*h.nchans / chanout, chanout);
+	__arange (axfreq, (float_t)h.fch1, (float_t)h.foff*h.nchans / chanout, chanout);
 	chanin = h.nchans;
 	// tr
 	tr[0] = 0.0f;
-	tr[3] = axfreq_ptr[0];
+	tr[3] = axfreq.front();
 	tr[2] = h.tsamp / 1E6;
 	tr[4] = h.foff * h.nchans / chanout;
 	cmin  = 0;
 	cmax  = pow (2, h.nbits) - 1;
-	// shapes
-	__safe_malloc (fb_fshape, chanout);
 	// parameters
 	sn = t.sn;
 	dm = t.dm;
@@ -160,14 +138,17 @@ void ccp::Read (const Header_t& h, const Trigger_t& t) {
 	nbits = h.nbits;
 }
 
-void ccp::Read (PtrFloat_t f, const Unsigned_t& _nsamps) {
-	nsamps = _nsamps;
+void ccp::Read (const FloatVector_t& f, const Unsigned_t& _nsamps) {
 	// nsamps
-	__safe_malloc (axtime_ptr, nsamps);
+	nsamps = _nsamps;
+	// reserve
+	__zfill (fb_tshape, nsamps);
+	__zfill (fb_fshape, chanout);
+	// nsamps
 	fb_size   = nsamps * chanout;
-	__safe_malloc (fb, fb_size);
-	__safe_malloc (fb_tshape, nsamps);
-	__arange (axtime_ptr, 0.0f, (float_t)( tsamp/1E6 ), nsamps);
+	__zfill (fb, fb_size);
+	// time axis
+	__arange (axtime, 0.0f, (float_t)( tsamp/1E6 ), nsamps);
 	// fscrunch
 	Fscrunch (f, nsamps, fb);
 	// ABShape

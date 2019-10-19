@@ -2,14 +2,20 @@
 # For trishul
 include Makefile.inc
 
-VPATH=./Dedispersion:./Plotting:./Formats:./Application
+VPATH=./:./Dedispersion:./Plotting:./Formats:./Application:./ob
 
-%.o : %.cpp
-	$(CXX) $(CFLAGS) $(INCLUDES) -c $? -o $@
+./ob/%.o : %.cpp
+	$(CXX) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-testcp : TestCandidatePlot.o CandidateProfilePlot.o TrishulPlotting.o \
+testcp : $(addprefix ./ob/, TestCandidatePlot.o CandidateProfilePlot.o TrishulPlotting.o \
 	Header.o BSON.o TrishulFormats.o \
 	PackUnpack.o \
-	Incoherent.o TrishulDedisperser.o
+	Incoherent.o TrishulDedisperser.o )
 
-	$(LINK) $^ -o $@  $(LDPGPLOT)
+	$(LINK) $+ -o $@  $(LDPGPLOT)
+
+clean:
+	rm -f ./ob/*.o
+
+.PHONY:
+	clean

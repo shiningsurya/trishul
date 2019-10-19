@@ -3,6 +3,8 @@
 ROOT:=/home/shining/work/trishul
 BIN:=/home/shining/work/bin
 
+OB:=./ob
+
 CXX:= g++ -std=c++17
 LINK:= g++ 
 

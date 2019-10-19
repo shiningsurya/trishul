@@ -7,6 +7,8 @@
 *.o
 *.obj
 
+ob/*
+
 # Precompiled Headers
 *.gch
 *.pch
@@ -35,3 +37,6 @@
 Test*.hpp
 Test*.cpp
 test*
+
+# ycm
+.ycm_extra_conf.py
