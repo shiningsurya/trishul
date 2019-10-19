@@ -18,3 +18,7 @@ using PtrFloat_t = float_t*;
 
 using path_t     = fs::path;
 using string_t   = std::string;
+
+
+// vector
+using FloatVector_t = std::vector<float_t>;

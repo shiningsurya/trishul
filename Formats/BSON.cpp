@@ -13,8 +13,11 @@ bool BSON::ReadFromFile (const string_t& filename) {
 		return false;
 	}
 
-	vb.pop_back(); vb.pop_back();
+	std::cout << "back=" << vb.back() << std::endl;
+	vb.pop_back(); 
 	// one for std::endl <- my fault
+	std::cout << "back=" << vb.back() << std::endl;
+	vb.pop_back();
 	// one for EOF
 	j = json::from_ubjson (vb);
 

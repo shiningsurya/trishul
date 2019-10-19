@@ -1,7 +1,8 @@
+#pragma once
 #include "trishul.hpp"
 
 class TrishulDedisperser {
-	private:
+	protected:
 		// parameters
 		double_t           tsamp;
 		float_t            freq_ch1; 
@@ -9,17 +10,21 @@ class TrishulDedisperser {
 		unsigned_t         nchans;
 		// state
 		bool               _is_plan_initialized;
-		TrishulVerbosity   verbose;
 		// search parameters
 		float_t            dm_low;
 		float_t            dm_high;
 		PtrFloat_t         dm_list;
 		unsigned_t         dm_count;
-		PtrUnsigned_t      kill_mask;
+		// single dm
+		float_t                 single_dm;
+		std::vector<Unsigned_t> idelays;
 	public:
-		virtual CreatePlan (const double_t, const unsigned_t, const float_t, const float_t);
+		virtual void CreatePlan (const double_t, const unsigned_t, const float_t, const float_t) = 0;
 		
-		virtual Execute ();
+		virtual void Execute (PtrFloat_t, Unsigned_t, PtrFloat_t) = 0;
+		virtual void Execute (PtrByte_t,  Unsigned_t, PtrByte_t) = 0;
+
+		void Delays (float_t _dm);
 
 		void SetDM (const float_t a, const float_t b) noexcept { 
 			dm_low = a; dm_high = b;
@@ -29,15 +34,4 @@ class TrishulDedisperser {
 			dm_list = new float[fv.size()];
 			std::copy (fv.begin(), fv.end(), dm_list);
 		} 
-
-		template<typename T>
-		void SetKillMask (const std::vector<T>& v) {
-			if (v.size() != nchans) {
-				if (verbose >= TrishulVerbosity::Warnings) {
-					std::cerr << "Trishul::Dedisperser::SetKillMask killmask size != nchan!" << std::endl;
-				}
-			}
-			kill_mask = new unsigned int[nchans];
-			std::copy (v.begin(), v.begin() + nchans, kill_mask);
-		}
 };

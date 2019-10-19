@@ -73,9 +73,9 @@ void ccp::Plot (const string_t& filename) {
 	cpgbox ("BCN",0.0,0,"BCNV",0.0,0);
 	cpgsfs (1);
 	cpgctab (
-			dync_l.data(), dync_r.data(), 
-			dync_g.data(), dync_b.data(), 
-			dync_l.size(), constrast, brightness);
+			heat_l.data(), heat_r.data(), 
+			heat_g.data(), heat_b.data(), 
+			heat_l.size(), constrast, brightness);
 	cpgimag (fb, chanout, nsamps,
 			1, chanout, 1, nsamps,
 			cmin, cmax, tr
