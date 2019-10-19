@@ -135,17 +135,30 @@ bool BSON::WriteHeader (const Header_t& head, const Trigger_t& trig)  {
 	return true;
 }
 
-Unsigned_t BSON::ReadData  (PtrByte_t data, Unsigned_t bytes ) {
+Unsigned_t BSON::ReadData  (PtrByte_t& data, Unsigned_t bytes ) {
+	bool ret = false;
 	auto v_fb = j["fb"];
-	std::fill (data, data + bytes, 0);
+	if (bytes == 0) {
+		// read entire file
+		bytes = v_fb.size();
+		ret = true;
+	}
+	if (data == nullptr) {
+		// alloc memory
+		data = new Byte_t[bytes]();
+	}
+	else {
+		// zero fill if used array
+		std::fill (data, data + bytes, 0);
+	}
 
 	std::copy (v_fb.begin(), v_fb.begin() + bytes, data);
 
 	d_readtimes++;
-	return v_fb.size() - bytes;
+	return ret ? v_fb.size() : v_fb.size() - bytes;
 }
 
-Unsigned_t BSON::WriteData (PtrByte_t data, Unsigned_t bytes) {
+Unsigned_t BSON::WriteData (PtrByte_t& data, Unsigned_t bytes) {
 	std::vector<Byte_t> v_fb;
 
 	std::copy (data, data + bytes, std::back_inserter(v_fb));

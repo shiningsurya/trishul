@@ -17,3 +17,4 @@ std::ostream& operator<<(std::ostream& os, const Trigger_t& f) {
 	os << "Peak_time    " << f.peak_time << std::endl;
 	return os;
 };
+

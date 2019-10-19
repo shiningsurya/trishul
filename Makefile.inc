@@ -7,7 +7,7 @@ CXX:= g++ -std=c++17
 COMPILE:= $(CXX)
 LINK:= $(CXX)
 
-COMPILEFLAGS:= -fPIC -g -O2 -frtti
+COMPILEFLAGS:= -fPIC -g  -frtti
 
 LDFLAGS:= 
 
@@ -17,3 +17,5 @@ INCLUDE_FLAGS+= -I$(ROOT)/Application/trishul
 INCLUDE_FLAGS+= -I$(ROOT)/Plotting
 INCLUDE_FLAGS+= -I$(ROOT)/Dedispersion
 INCLUDE_FLAGS+= -I$(ROOT)/Formats
+
+LDPGPLOT := -lcpgplot -lpng -lX11 -lpgplot -lgfortran

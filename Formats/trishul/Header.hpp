@@ -41,3 +41,4 @@ typedef struct {
 std::ostream& operator<<(std::ostream& os, const Header_t& f);
 
 std::ostream& operator<<(std::ostream& os, const Trigger_t& f);
+

@@ -11,8 +11,9 @@ class BSON : public TrishulFormats {
 		string_t     filename;
 		char         cfile[256];
 		json         j;
-		Unsigned_t   nsamps;
 	public:
+		Unsigned_t   nsamps;
+
 		BSON (const string_t& _dir) : odir(_dir) {}
 		BSON () : odir("./") {}
 		~BSON () {}
@@ -24,7 +25,7 @@ class BSON : public TrishulFormats {
 		// override
 		bool ReadHeader (Header_t& , Trigger_t& ) override;
 		bool WriteHeader (const Header_t&, const Trigger_t&) override;
-		Unsigned_t ReadData  (PtrByte_t, Unsigned_t )override;
-		Unsigned_t WriteData (PtrByte_t, Unsigned_t ) override;
+		Unsigned_t ReadData  (PtrByte_t&, Unsigned_t )override;
+		Unsigned_t WriteData (PtrByte_t&, Unsigned_t ) override;
 };
 
