@@ -6,7 +6,7 @@
 #include "trishul/Incoherent.hpp"
 
 int main() {
-	string_t file("/home/shining/work/vlite/analysis/ifrb/wtf/20191017_210915_muos_ea11_dm80.13_sn28.75.fbson");
+	string_t file("/home/vlite-master/surya/analysis/ifrb/wtf/20191017_210915_muos_ea11_dm80.13_sn28.75.fbson");
 	// bson
 	BSON f;
 	const TrishulFormats& tf_f = f;
@@ -42,7 +42,7 @@ int main() {
 	CandidateProfilePlot cp;
 	cp.Read (hh, tt);
 	cp.Read (ddata, ddnsamps);
-	cp.Plot ("/tmp/haha.ps/vcps");
+	cp.Plot ("/tmp/haha.png/png");
 	//
 	return 0;
 }

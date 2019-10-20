@@ -5,6 +5,11 @@
 
 using ccp = CandidateProfilePlot;
 
+constexpr std::array<float,5> ccp::heat_l;
+constexpr std::array<float,5> ccp::heat_r;
+constexpr std::array<float,5> ccp::heat_g;
+constexpr std::array<float,5> ccp::heat_b;
+
 ccp::CandidateProfilePlot (float_t _charh) : charh(_charh) {
 	std::fill (tr, tr + 6, 0.0f);
 	//
@@ -40,7 +45,7 @@ void ccp::__zfill (std::vector<T>& ptr, Unsigned_t size) {
 }
 
 void ccp::Plot (const string_t& filename) {
-	cpgbeg (0,"/xwin",1,1); 
+	cpgbeg (0,filename.c_str(),1,1); 
 	cpgsch (charh); 
 	cpgask (1);
 	cpgpap (0.0, 0.618);

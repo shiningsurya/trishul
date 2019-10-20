@@ -26,7 +26,7 @@ bool BSON::ReadFromFile (const string_t& filename) {
 
 bool BSON::WriteToFile () {
 	auto ofile = odir / filename;
-	std::fstream fs (ofile, std::ios::binary);
+	std::fstream fs (ofile.string(), std::ios::binary);
 	if (!fs.good()) {
 		return false;
 	}
@@ -47,7 +47,7 @@ bool BSON::WriteToFile () {
 
 bool BSON::WriteToFile (const string_t& fname) {
 	auto ofile = odir / fname;
-	std::fstream fs (ofile, std::ios::binary);
+	std::fstream fs (ofile.string(), std::ios::binary);
 	if (!fs.good()) {
 		return false;
 	}
