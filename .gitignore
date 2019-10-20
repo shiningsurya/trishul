@@ -40,3 +40,6 @@ test*
 
 # ycm
 .ycm_extra_conf.py
+
+# Makefile
+Makefile.inc
