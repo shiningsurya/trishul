@@ -10,6 +10,7 @@ class TrishulDedisperser {
 		unsigned_t         nchans;
 		// state
 		bool               _is_plan_initialized;
+		bool               _is_dmlist_ready;
 		// search parameters
 		FloatVector_t      dm_list;
 		// single dm
@@ -29,9 +30,19 @@ class TrishulDedisperser {
 			// 
 			dm_list.push_back (start);
 			for (unsigned_t i = 1; i < n; i++,start+=step) dm_list.push_back (start);
+			//
+			_is_dmlist_ready = false;
 		}
 
 		void SetDM (const FloatVector_t& fv) noexcept {
 			dm_list = fv;
 		} 
+};
+
+struct TrishulDedisperserError : std::exception {
+  char * msg;
+  TrishulDedisperserError (const char * _msg) {
+    strcpy (msg, _msg);
+  }
+  const char * what() const noexcept { return msg; }
 };
