@@ -34,8 +34,6 @@ ob/*
 *.app
 
 # Tests
-Test*.hpp
-Test*.cpp
 test*
 
 # ycm
