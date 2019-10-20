@@ -37,6 +37,13 @@ testdd : $(addprefix ./ob/, TestDedisp.o \
 								PackUnpack.o \
 								Dedisp.o TrishulDedisperser.o )
 		$(LINK) $+ -L$(DEDISP_LIB)  -L$(BOOST_LIB) -Wl,-rpath=$(BOOST_LIB) $(DEDISP_LD) $(BOOST_LD) -o $@  
+
+testfb : $(addprefix ./ob/, TestFilterbank.o Filterbank.o TrishulFormats.o \
+								Header.o \
+								PackUnpack.o )
+
+		$(LINK) $+ -L$(BOOST_LIB) -Wl,-rpath=$(BOOST_LIB)  $(BOOST_LD) -o $@  
+
 clean:
 		rm -f ./ob/*.o
 

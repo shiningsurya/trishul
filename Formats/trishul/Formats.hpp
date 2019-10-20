@@ -18,3 +18,10 @@ class TrishulFormats {
 		virtual Unsigned_t WriteData (ByteVector_t&, Unsigned_t) = 0;
 };
 
+struct TrishulFormatsError: std::exception {
+  char * msg;
+  TrishulFormatsError (const char * _msg) {
+    strcpy (msg, _msg);
+  }
+  const char * what() const noexcept { return msg; }
+};
