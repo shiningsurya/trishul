@@ -30,3 +30,11 @@ using string_t   = std::string;
 using FloatVector_t = std::vector<float_t>;
 using ByteVector_t = std::vector<Byte_t>;
 
+class TrishulError : public std::exception {
+	private:
+		string_t msg;
+	public:
+		TrishulError (const char * _msg) : msg(_msg) {}
+		~TrishulError() = default;
+		const char * what() const noexcept { return msg.c_str(); }
+};

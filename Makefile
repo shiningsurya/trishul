@@ -44,6 +44,13 @@ testfb : $(addprefix ./ob/, TestFilterbank.o Filterbank.o TrishulFormats.o \
 
 		$(LINK) $+ -L$(BOOST_LIB) -Wl,-rpath=$(BOOST_LIB)  $(BOOST_LD) -o $@  
 
+testfbt : $(addprefix ./ob/, TestFBT.o FilterbankBowtiePlot.o TrishulPlotting.o \
+								Header.o Filterbank.o TrishulFormats.o \
+								PackUnpack.o \
+								Incoherent.o TrishulDedisperser.o )
+
+		$(LINK) $+ -L$(BOOST_LIB) -Wl,-rpath=$(BOOST_LIB) $(PGPLOT_LD) $(BOOST_LD) -o $@  
+
 clean:
 		rm -f ./ob/*.o
 

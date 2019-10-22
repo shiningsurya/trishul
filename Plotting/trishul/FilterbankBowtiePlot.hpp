@@ -4,16 +4,15 @@
 // pgplot
 #include "cpgplot.h"
 
-class CandidateProfilePlot : protected TrishulPlotting {
+
+class FilterbankBowtiePlot : protected TrishulPlotting {
 	private:
 		// viewports
-		float_t      xmin;
-		float_t      xmax;
-		float_t      ymin;
-		float_t      ymax;
 		float_t      charh;
+		unsigned_t   count;
 		// images
-		float_t      tr[6];
+		float_t      tr_fb[6];
+		float_t      tr_bt[6];
 		unsigned_t   txtrow;
 		unsigned_t   csize;
 		unsigned_t   cmin;
@@ -36,43 +35,33 @@ class CandidateProfilePlot : protected TrishulPlotting {
 		float_t      xxmax;
 		float_t      dd_range;
 		// plot
-		FloatVector_t   fb_tshape;
 		FloatVector_t   fb_fshape;
 		FloatVector_t   fb;
-		Unsigned_t      fb_size;
-		FloatVector_t   axtime;
+		FloatVector_t   bt_fshape;
+		FloatVector_t   bt;
+		float_t         tleft;
+		float_t         tright;
 		FloatVector_t   axfreq;
+		FloatVector_t   axdm;
 		// parameters
-		float_t      sn;
-		float_t      dm;
-		float_t      width;
-		float_t      peak_time;
-		float_t      tstart;
-		double_t     tsamp;
+		float_t      tsamp;
 		unsigned_t   stationid;
 		char         name[16];
 		char         group[16];
-		float_t      duration;
-		unsigned_t   nbits;
-		Unsigned_t   nsamps;
 	public:
-		CandidateProfilePlot (float_t _charh = 0.65);
-		~CandidateProfilePlot () = default;
+		FilterbankBowtiePlot (float_t _charh = 0.65);
+		~FilterbankBowtiePlot () { if (count) cpgend (); }
 
 		void Read (const Header_t& h, const Trigger_t& t) override;
 		void ReadFB (const FloatVector_t& f, const Unsigned_t& nsamps) override;
-		void ReadBT (const FloatVector_t& f, const Unsigned_t& nsamps) override {
-			throw TrishulError("CandidateProfilePlot::ReadSN not supported");
+		void ReadBT (const FloatVector_t& f, const Unsigned_t& nsamps) override;
+
+		void SetDM (const FloatVector_t& dms) { 
+			axdm = dms;
+			tr_bt[3] = axdm.front();
+			tr_bt[4] = (axdm.back() - axdm.front()) / axdm.size();
 		}
+
 
 		void Plot (const string_t& filename) override;
 };
-
-/*
- *template<typename It>
- *void TrishulPlotting::__ranger (It, It, typename It::reference, typename It::reference);
- *template<typename T>
- *void TrishulPlotting::__arange (std::vector<T>&, T , T , Unsigned_t );
- *template<typename T>
- *void TrishulPlotting::__zfill (std::vector<T>& , Unsigned_t );
- */

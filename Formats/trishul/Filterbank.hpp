@@ -2,7 +2,8 @@
 #include "trishul.hpp"
 #include "trishul/Formats.hpp"
 
-#include <math.h>
+#include <cmath>
+#include <cstring>
 
 class Filterbank : public  TrishulFormats {
   private:
@@ -82,7 +83,7 @@ class Filterbank : public  TrishulFormats {
       filename = fn;
       fp = fopen (filename.c_str(), "rwb+");
       if (fp == NULL) {
-        throw TrishulFormatsError ("Filterbank unable to open!");
+        throw TrishulError ("Filterbank unable to open!");
       }
     }
     void Close () {

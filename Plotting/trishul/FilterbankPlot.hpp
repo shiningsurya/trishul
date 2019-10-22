@@ -1,10 +1,10 @@
 #pragma once
 #include "trishul.hpp"
-#include "trishul/TrishulPlotting.hpp"
-// pgplot
+#include "trishul/Plotting.hpp"
+
 #include "cpgplot.h"
 
-class CandidateProfilePlot : protected TrishulPlotting {
+class FilterbankPlot : protected TrishulPlotting {
 	private:
 		// viewports
 		float_t      xmin;
@@ -36,17 +36,10 @@ class CandidateProfilePlot : protected TrishulPlotting {
 		float_t      xxmax;
 		float_t      dd_range;
 		// plot
-		FloatVector_t   fb_tshape;
-		FloatVector_t   fb_fshape;
 		FloatVector_t   fb;
-		Unsigned_t      fb_size;
 		FloatVector_t   axtime;
 		FloatVector_t   axfreq;
 		// parameters
-		float_t      sn;
-		float_t      dm;
-		float_t      width;
-		float_t      peak_time;
 		float_t      tstart;
 		double_t     tsamp;
 		unsigned_t   stationid;
@@ -56,23 +49,20 @@ class CandidateProfilePlot : protected TrishulPlotting {
 		unsigned_t   nbits;
 		Unsigned_t   nsamps;
 	public:
-		CandidateProfilePlot (float_t _charh = 0.65);
-		~CandidateProfilePlot () = default;
+		FilterbankPlot (unsigned_t nrow_, float_t rowdur_,  float_t _charh);
+		~FilterbankPlot () = default;
 
 		void Read (const Header_t& h, const Trigger_t& t) override;
-		void ReadFB (const FloatVector_t& f, const Unsigned_t& nsamps) override;
-		void ReadBT (const FloatVector_t& f, const Unsigned_t& nsamps) override {
-			throw TrishulError("CandidateProfilePlot::ReadSN not supported");
-		}
+		void Read (const FloatVector_t& f, const Unsigned_t& nsamps) override;
 
 		void Plot (const string_t& filename) override;
-};
 
-/*
- *template<typename It>
- *void TrishulPlotting::__ranger (It, It, typename It::reference, typename It::reference);
- *template<typename T>
- *void TrishulPlotting::__arange (std::vector<T>&, T , T , Unsigned_t );
- *template<typename T>
- *void TrishulPlotting::__zfill (std::vector<T>& , Unsigned_t );
- */
+		template<typename It>
+		void __ranger (It i, It j);
+
+		template<typename T>
+		void __arange (std::vector<T>& ptr, T start, T step, Unsigned_t size);
+
+		template<typename T>
+		void __zfill (std::vector<T>& ptr, Unsigned_t size);
+};

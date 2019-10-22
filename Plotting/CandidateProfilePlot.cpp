@@ -18,32 +18,6 @@ ccp::CandidateProfilePlot (float_t _charh) : charh(_charh) {
 	chanout = 512;
 }
 
-template<typename It>
-void ccp::__ranger (It i, It j) {
-	auto min = *std::min_element (i, j);
-	auto max = *std::max_element (i, j);
-
-	dd_range = max - min;
-
-	xxmin = min  - (xxfac * dd_range);
-	xxmax = max  + (xxfac * dd_range);
-}
-
-template<typename T>
-void ccp::__arange (std::vector<T>& ptr, T start, T step, Unsigned_t size) {
-	ptr.push_back (start);
-	for (Unsigned_t i = 1; i < size; i++) {
-		ptr.push_back (ptr.back() + step);
-	}
-}
-
-template<typename T>
-void ccp::__zfill (std::vector<T>& ptr, Unsigned_t size) {
-	for (Unsigned_t i = 0; i < size; i++) {
-		ptr.push_back (0.0f);
-	}
-}
-
 void ccp::Plot (const string_t& filename) {
 	cpgbeg (0,filename.c_str(),1,1); 
 	cpgsch (charh); 
@@ -72,7 +46,7 @@ void ccp::Plot (const string_t& filename) {
 	cpgsfs(1);
 	cpgsci(1); // color index
 	cpgsvp(0.65, 0.90, 0.1, 0.65); // bandshape
-	__ranger (fb_fshape.cbegin(), fb_fshape.cend());
+	__ranger (fb_fshape.cbegin(), fb_fshape.cend(), xxmin, xxmax);
 	cpgswin (xxmin, xxmax, axfreq.front(), axfreq.back());
 	cpgbox("BCN",0.0,0,"BCV",0.0,0);
 	cpgline(chanout, fb_fshape.data(), axfreq.data());
@@ -81,7 +55,7 @@ void ccp::Plot (const string_t& filename) {
 	// TIMESHAPE
 	cpgsci (1); // color index
 	cpgsvp (0.1, 0.65, 0.65, 0.9); // fscrunched profile 
-	__ranger (fb_tshape.cbegin(), fb_tshape.cend());
+	__ranger (fb_tshape.cbegin(), fb_tshape.cend(), xxmin, xxmax);
 	cpgswin (axtime.front(), axtime.back(), xxmin, xxmax);
 	cpgbox ("BC",0.0,0,"BCNV",0.0,0);
 	cpgline (nsamps, axtime.data(), fb_tshape.data()); 
@@ -143,7 +117,7 @@ void ccp::Read (const Header_t& h, const Trigger_t& t) {
 	nbits = h.nbits;
 }
 
-void ccp::Read (const FloatVector_t& f, const Unsigned_t& _nsamps) {
+void ccp::ReadFB (const FloatVector_t& f, const Unsigned_t& _nsamps) {
 	// nsamps
 	nsamps = _nsamps;
 	// reserve

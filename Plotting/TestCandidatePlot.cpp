@@ -41,7 +41,7 @@ int main() {
 	// plotting
 	CandidateProfilePlot cp;
 	cp.Read (hh, tt);
-	cp.Read (ddata, ddnsamps);
+	cp.ReadFB (ddata, ddnsamps);
 	cp.Plot ("/tmp/haha.png/png");
 	//
 	return 0;

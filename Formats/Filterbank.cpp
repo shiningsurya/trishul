@@ -32,7 +32,7 @@ bool Filterbank::ReadHeader (Header_t& h, Trigger_t& t) {
   // begin
   unsigned_t readh = 0;
   int idummy = 0;
-  for (;s != __he && readh <=10; s = recv(), readh++) {
+  for (;s != __he; s = recv(), readh++) {
     if (s == __tp) recv (h.tsamp); 
     else if (s == __tt) recv (h.tstart);
     else if (s == __f1) recv (h.fch1);
@@ -52,6 +52,7 @@ bool Filterbank::ReadHeader (Header_t& h, Trigger_t& t) {
   fseek (fp, 0L, SEEK_END);
   nsamps = ftell (fp) - headersize;
   fseek (fp, headersize, SEEK_SET);
+  return true;
 }
 
 bool Filterbank::WriteHeader (const Header_t& h, const Trigger_t& t) {
@@ -82,10 +83,12 @@ bool Filterbank::WriteHeader (const Header_t& h, const Trigger_t& t) {
   // division by 1e6 bc DADA tsamp unit is us
   send(__tp, h.tsamp/1e6);
   send(__he);
+
+  return true;
 }
 
 Unsigned_t Filterbank::WriteData (ByteVector_t& b, Unsigned_t n) {
-  fwrite (b.data(), 1, n ? n : b.size(), fp);
+  return fwrite (b.data(), 1, n ? n : b.size(), fp);
 }
 
 Unsigned_t Filterbank::ReadData (ByteVector_t& b, Unsigned_t n) {
@@ -98,6 +101,6 @@ Unsigned_t Filterbank::ReadData (ByteVector_t& b, Unsigned_t n) {
   b.resize (n, 0);
 
   // read
-  fread (b.data(), 1, n, fp);
+  return fread (b.data(), 1, n, fp);
 }
 

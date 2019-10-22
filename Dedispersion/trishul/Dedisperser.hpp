@@ -39,10 +39,3 @@ class TrishulDedisperser {
 		} 
 };
 
-struct TrishulDedisperserError : std::exception {
-  char * msg;
-  TrishulDedisperserError (const char * _msg) {
-    strcpy (msg, _msg);
-  }
-  const char * what() const noexcept { return msg; }
-};
