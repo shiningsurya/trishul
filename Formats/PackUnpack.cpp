@@ -66,72 +66,76 @@ static inline void unpack8bit (float_t& a, const Byte_t& dc) {
 // 2BIT
 void Unpack2Bit (const ByteVector_t& bin, FloatVector_t& fout) {
 	// reserve
-	fout.reserve (bin.size() * 8 / 2);
+	fout.resize (bin.size() * 8 / 2);
+	Unsigned_t i = 0;
 	// work
 	float_t a,b,c,d;
 	for (const Byte_t& dc : bin) {
 		::unpack2bit (a, b, c, d, dc);
-		fout.push_back (a);
-		fout.push_back (b);
-		fout.push_back (c);
-		fout.push_back (d);
+		fout[i++] = a;
+		fout[i++] = b;
+		fout[i++] = c;
+		fout[i++] = d;
 	}
 }
 void Pack2Bit  (const FloatVector_t& fin, ByteVector_t& bout) {
 	// reserve
-	bout.reserve (fin.size() * 2 / 8);
+	bout.resize (fin.size() * 2 / 8);
 	// work
 	Unsigned_t ii = 0;
 	float_t a,b,c,d;
+		fout.push_back (a);
 	for(Unsigned_t it = 0; it < fin.size();) {
 		a = fin[it++]; b = fin[it++];
 		c = fin[it++]; d = fin[it++];
-		bout.push_back( ::pack2bit(a,b,c,d) );
+		bout[ii++] = ::pack2bit(a,b,c,d);
 	}
 }
 
 // 4BIT
 void Unpack4Bit (const ByteVector_t& bin, FloatVector_t& fout) {
 	// reserve
-	fout.reserve (bin.size() * 8 / 4);
+	fout.resize (bin.size() * 8 / 4);
+	Unsigned_t i = 0;
 	// work
 	float_t a,b;
 	for (const Byte_t& dc : bin) {
 		::unpack4bit (a, b, dc);
-		fout.push_back (a);
-		fout.push_back (b);
+		fout[i++] = a;
+		fout[i++] = b;
 	}
 };
 void Pack4Bit  (const FloatVector_t& fin, ByteVector_t& bout) {
 	// reserve
-	bout.reserve (fin.size() * 2 / 4);
+	bout.resize (fin.size() * 2 / 4);
 	// work
 	Unsigned_t ii = 0;
 	float_t a,b;
 	for(Unsigned_t it = 0; it < fin.size();) {
 		a = fin[it++]; b = fin[it++];
-		bout.push_back( ::pack4bit(a,b) );
+		bout[ii++] = ::pack4bit(a,b);
 	}
 }
 // 8BIT
 void Unpack8Bit (const ByteVector_t& bin, FloatVector_t& fout) {
 	// reserve
-	fout.reserve (bin.size() * 8 / 8);
+	fout.resize (bin.size() * 8 / 8);
+	Unsigned_t i = 0;
 	// work
 	float_t a;
 	for (const Byte_t& dc : bin) {
 		::unpack8bit (a, dc);
-		fout.push_back (a);
+		fout[i++] = a;
 	}
 };
 void Pack8Bit  (const FloatVector_t& fin, ByteVector_t& bout) {
 	// reserve
-	bout.reserve (fin.size() * 8 / 8);
+	bout.resize (fin.size() * 8 / 8);
 	// work
 	Unsigned_t ii = 0;
 	float_t a;
 	for(Unsigned_t it = 0; it < fin.size();) {
 		a = fin[it++];
-		bout.push_back( ::pack8bit(a) );
+		bout[ii++] = ::pack8bit(a);
 	}
 }
