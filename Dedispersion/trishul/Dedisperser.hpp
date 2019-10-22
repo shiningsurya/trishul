@@ -23,6 +23,7 @@ class TrishulDedisperser {
 		virtual void Execute (const ByteVector_t&,  Unsigned_t, ByteVector_t&) = 0;
 
 		void Delays (float_t _dm);
+		float_t MaxDM (Unsigned_t nsamps);
 
 		void SetDM (const float_t a, const float_t b, const unsigned_t n) noexcept { 
 			float_t start = a;
@@ -39,3 +40,13 @@ class TrishulDedisperser {
 		} 
 };
 
+<<<<<<< Updated upstream
+=======
+struct TrishulDedisperserError : std::exception {
+  char  msg[32];
+  TrishulDedisperserError (const char * _msg) {
+    strcpy (msg, _msg);
+  }
+  const char * what() const noexcept { return msg; }
+};
+>>>>>>> Stashed changes
