@@ -24,7 +24,7 @@ typedef struct {
 	// strings
 	char                utc_start_str[16];
 	char                name[16];
-	char                group[16];
+	char                group[21];
 } Header_t;
 
 

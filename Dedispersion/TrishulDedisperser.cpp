@@ -21,7 +21,7 @@ float_t td::MaxDM (Unsigned_t nsamps) {
 	float_t f0 = freq_ch1;
 	float_t f1 = f0 + ( nchans * freq_off);
 
-	float_t tdm = 4148.741601 * ((1.0f/f1/f1) - (1.0f/f0/f0);
+	float_t tdm = 4148.741601 * ((1.0f/f1/f1) - (1.0f/f0/f0));
 
 	return nsamps * tsamp / tdm;
 }

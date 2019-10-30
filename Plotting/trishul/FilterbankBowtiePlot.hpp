@@ -53,8 +53,8 @@ class FilterbankBowtiePlot : protected TrishulPlotting {
 		~FilterbankBowtiePlot () { if (count) cpgend (); }
 
 		void Read (const Header_t& h, const Trigger_t& t) override;
-		void ReadFB (const FloatVector_t& f, const Unsigned_t& nsamps) override;
-		void ReadBT (const FloatVector_t& f, const Unsigned_t& nsamps) override;
+		void ReadFB (const FloatVector_t& f, const Unsigned_t& nsamps, const Unsigned_t& offset = 0) override;
+		void ReadBT (const FloatVector_t& f, const Unsigned_t& nsamps, const Unsigned_t& offset = 0) override;
 
 		void SetDM (const FloatVector_t& dms) { 
 			axdm = dms;

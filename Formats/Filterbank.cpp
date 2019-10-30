@@ -52,6 +52,11 @@ bool Filterbank::ReadHeader (Header_t& h, Trigger_t& t) {
   fseek (fp, 0L, SEEK_END);
   nsamps = ftell (fp) - headersize;
   fseek (fp, headersize, SEEK_SET);
+
+  // header
+  // XXX Is this generic?
+  auto _last = filename.find_last_of ("/");
+  strcpy (h.group, filename.substr (_last+1, 21).c_str());
   return true;
 }
 
@@ -91,16 +96,13 @@ Unsigned_t Filterbank::WriteData (ByteVector_t& b, Unsigned_t n) {
   return fwrite (b.data(), 1, n ? n : b.size(), fp);
 }
 
-Unsigned_t Filterbank::ReadData (ByteVector_t& b, Unsigned_t n) {
-  // headersize check
-  if (ftell (fp) != headersize) {
-    fseek (fp, headersize, SEEK_SET);
-  }
-
+Unsigned_t Filterbank::ReadData (ByteVector_t& b, Unsigned_t n, Unsigned_t offset) {
   // resize trick
-  b.resize (n, 0);
+  // Let caller worry about size
+  //b.resize (n + offset, 0);
 
   // read
-  return fread (b.data(), 1, n, fp);
+  auto ptr = b.data() + offset;
+  return fread (ptr, 1, n, fp);
 }
 

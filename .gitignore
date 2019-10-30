@@ -9,6 +9,8 @@
 
 ob/*
 
+*.orig
+
 # Precompiled Headers
 *.gch
 *.pch
@@ -41,3 +43,7 @@ test*
 
 # Makefile
 Makefile.inc
+
+# ps/png
+*.png
+*.ps

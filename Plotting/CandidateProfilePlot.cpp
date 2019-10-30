@@ -117,7 +117,7 @@ void ccp::Read (const Header_t& h, const Trigger_t& t) {
 	nbits = h.nbits;
 }
 
-void ccp::ReadFB (const FloatVector_t& f, const Unsigned_t& _nsamps) {
+void ccp::ReadFB (const FloatVector_t& f, const Unsigned_t& _nsamps, const Unsigned_t& _offset) {
 	// nsamps
 	nsamps = _nsamps;
 	// reserve

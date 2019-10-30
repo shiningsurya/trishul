@@ -67,7 +67,7 @@ class Filterbank : public  TrishulFormats {
   public:
 		Unsigned_t   nsamps;
     // tors
-    Filterbank (const string_t& fbname) {
+    Filterbank (const string_t& fbname) : filename(fbname) {
       Open ( fbname );
     }
     ~Filterbank () { Close(); }
@@ -96,6 +96,6 @@ class Filterbank : public  TrishulFormats {
 		// override
 		bool ReadHeader (Header_t& , Trigger_t& ) override;
 		bool WriteHeader (const Header_t&, const Trigger_t&) override;
-		Unsigned_t ReadData  (ByteVector_t&, Unsigned_t )override;
-		Unsigned_t WriteData (ByteVector_t&, Unsigned_t ) override;
+		Unsigned_t ReadData  (ByteVector_t&, Unsigned_t, Unsigned_t)override;
+		Unsigned_t WriteData (ByteVector_t&, Unsigned_t) override;
 };

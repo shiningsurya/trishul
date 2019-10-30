@@ -8,10 +8,11 @@ class TrishulPlotting {
 		static unsigned_t       chanout;
 
 		Unsigned_t       nsamps;
+		Unsigned_t       overlap;
 
 		static float_t   xxfac;
 		
-		static void Fscrunch (const FloatVector_t& fin, Unsigned_t& nsamps, FloatVector_t& fout);
+		static void Fscrunch (const FloatVector_t& fin, const Unsigned_t& nsamps, const Unsigned_t& nchans, FloatVector_t& fout);
 		static void ABShape (const FloatVector_t& f, const Unsigned_t& nsamps, const unsigned_t& nchans, FloatVector_t& tshape, FloatVector_t& bshape);
 		static void BShape (const FloatVector_t& f, const Unsigned_t& nsamps, const unsigned_t& nchans, FloatVector_t& bshape);
 		static void BMaxShape (const FloatVector_t& f, const Unsigned_t& nsamps, const unsigned_t& nchans, FloatVector_t& bshape);
@@ -24,8 +25,8 @@ class TrishulPlotting {
 	public:
 
 		virtual void Read (const Header_t& h, const Trigger_t& t) = 0;
-		virtual void ReadFB (const FloatVector_t& f, const Unsigned_t& nsamps) = 0;
-		virtual void ReadBT (const FloatVector_t& f, const Unsigned_t& nsamps) = 0;
+		virtual void ReadFB (const FloatVector_t& f, const Unsigned_t& nsamps, const Unsigned_t& offset = 0) = 0;
+		virtual void ReadBT (const FloatVector_t& f, const Unsigned_t& nsamps, const Unsigned_t& offset = 0) = 0;
 
 		virtual void Plot (const string_t& filename) = 0;
 };

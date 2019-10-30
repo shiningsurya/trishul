@@ -30,19 +30,22 @@ void fbt::Plot (const string_t& filename) {
 	else {
 		cpgbeg (0,filename.c_str(),1,1); 
 		cpgsch (charh); 
-		cpgask (1);
+		cpgask (0);
 		cpgpap (0.0, 0.618);
 	}
 	////////////////////////////////////////////////////////////////
 	// DE-DEDISPERSED WATERFALL
-	cpgsci(1); // color index
+	cpgscf(1);
 	cpgsvp (0.1, 0.75, 0.1, 0.5);
 	cpgswin (
 			tleft, tright,
 			axfreq.front(), axfreq.back()
 	);
+	std::cout << tleft << ",";
+	std::cout << tright << ",";
+	std::cout << axfreq.front() << ",";
+	std::cout << axfreq.back() << std::endl;
 	cpgbox ("BCN",0.0,0,"BCNV",0.0,0);
-	cpgsfs (1);
 	cpgctab (
 			heat_l.data(), heat_r.data(), 
 			heat_g.data(), heat_b.data(), 
@@ -52,26 +55,33 @@ void fbt::Plot (const string_t& filename) {
 			1, chanout, 1, nsamps,
 			cmin, cmax, tr_fb
 	);
-	cpgmtxt("B",2.5,.5,0.5,"Time (s)");
-	cpgmtxt("L",4,0.5,0.5,"Freq (MHz)");
+	cpglab ("Time (s)", "Freq (MHz)", "");
+	//cpgmtxt("B",2.5,.5,0.5,"Time (s)");
+	//cpgmtxt("L",4,0.5,0.5,"Freq (MHz)");
 	// BANDSHAPE
-	cpgsfs(1);
 	cpgsci(1); // color index
 	cpgsvp(0.75, 0.90, 0.1, 0.5); // bandshape
 	__ranger (fb_fshape.cbegin(), fb_fshape.cend(), xxmin, xxmax);
 	cpgswin (xxmin, xxmax, axfreq.front(), axfreq.back());
+	std::cout << xxmin << ",";
+	std::cout << xxmax << ",";
+	std::cout << axfreq.front() << ",";
+	std::cout << axfreq.back() << std::endl;
 	cpgbox("BCN",0.0,0,"BCV",0.0,0);
 	cpgline(chanout, fb_fshape.data(), axfreq.data());
 	cpgmtxt("B",2.5,.5,0.5,"Intensity (a.u.)");
-	cpgmtxt("T",-1*charh,.5,0.5, "Bandshape");
+	cpgmtxt("T",1.0,.5,0.5, "Bandshape");
 	// BOWTIE
 	cpgsvp (0.1, 0.75, 0.5, 0.9);
 	cpgswin (
 			tleft, tright,
 			axdm.front(), axdm.back()
 	);
+	std::cout << tleft << ",";
+	std::cout << tright << ",";
+	std::cout << axdm.front() << ",";
+	std::cout << axdm.back() << std::endl;
 	cpgbox ("BC",0.0,0,"BCNV",0.0,0);
-	cpgsfs (1);
 	cpgctab (
 			heat_l.data(), heat_r.data(), 
 			heat_g.data(), heat_b.data(), 
@@ -82,8 +92,8 @@ void fbt::Plot (const string_t& filename) {
 			1, axdm.size(), 1, nsamps, 
 			xxmin, xxmax, tr_bt
 	);
-	//cpgmtxt("B",2.5,.5,0.5,"Time (s)");
-	cpgmtxt("L",4,0.5,0.5,"DM (pc/cc)");
+	cpgmtxt("B",2.5,.5,0.5,"Time (s)");
+	cpgmtxt("L",4,0.5,0.5,"DM (pc cc)");
 	// TITLE
 	char txt[256];
 	cpgmtxt("T",1.0,0.0,0.0,group);
@@ -92,46 +102,58 @@ void fbt::Plot (const string_t& filename) {
 	snprintf(txt, 256, "Source: %s", name);
 	cpgmtxt("T",1.0, 0.9, 1.0, txt);
 	// DMAXSHAPE
-	cpgsfs(1);
 	cpgsci(1); // color index
 	cpgsvp(0.75, 0.90, 0.5, 0.9); // bandshape
 	__ranger (bt_fshape.cbegin(), bt_fshape.cend(), xxmin, xxmax);
 	cpgswin (xxmin, xxmax, axdm.front(), axdm.back());
+	std::cout << xxmin << ",";
+	std::cout << xxmax << ",";
+	std::cout << axdm.front() << ",";
+	std::cout << axdm.back() << std::endl;
 	cpgbox("BCM",0.0,0,"BCV",0.0,0);
 	cpgline(axdm.size(), bt_fshape.data(), axdm.data());
-	cpgmtxt("B",2.5,.5,0.5,"Max / DM"); 
+	cpgmtxt("B",2.5,.5,0.5,"Max per DM"); 
 	////////////////////////////////////////////////////////////////
 	// cpgend deledated to dtor
 }
 
-void fbt::ReadFB (const FloatVector_t& f, const Unsigned_t& _nsamps) {
+void fbt::ReadFB (const FloatVector_t& f, const Unsigned_t& _nsamps, const Unsigned_t& _offset) {
 	// nsamps
 	nsamps = _nsamps;
-	tleft = tright;
+	overlap= _offset;
+	tleft = tright - (_offset*tsamp);
+	tleft = tleft >= 0.0f ? tleft : 0.0f;
 	tright = tleft + (nsamps*tsamp);
+	//v --ordering is important
+	//tleft = tright - (_offset*tsamp);
+	//tright = tleft + (nsamps*tsamp);
 	// reserve
 	__zfill (fb_fshape, chanout);
 	// nsamps
 	auto fb_size   = nsamps * chanout;
-	__zfill (fb, fb_size);
+	if (fb.size() != fb_size)
+    __zfill (fb, fb_size);
 	// fscrunch
-	Fscrunch (f, nsamps, fb);
+	Fscrunch (f, nsamps, chanout, fb);
 	// ABShape
 	BShape (fb, nsamps, chanout, fb_fshape);
 }
 
-void fbt::ReadBT (const FloatVector_t& f, const Unsigned_t& _nsamps) {
+void fbt::ReadBT (const FloatVector_t& f, 
+  const Unsigned_t& _nsamps,
+  const Unsigned_t& _offset) {
 	// XXX It is called after ReadFB has been called
 	if (_nsamps != nsamps) {
 		std::cerr << "FilterbankBowtiePlot::ReadFB read different." << std::endl;
 		nsamps = std::min (nsamps, _nsamps);
 	}
-	// reserve
+	if (_offset != overlap) {
+		std::cerr << "FilterbankBowtiePlot::ReadFB read different." << std::endl;
+		overlap = std::min (overlap, _offset);
+	}
+	// resize
 	__zfill (bt_fshape, axdm.size());
-	// nsamps
-	auto bt_size   = nsamps * axdm.size();
-	__zfill (fb, bt_size);
-	// fscrunch
+	// copy 
 	bt = f;
 	// ABShape
 	BMaxShape (bt, nsamps, axdm.size(), bt_fshape);

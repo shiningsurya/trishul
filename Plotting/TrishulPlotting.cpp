@@ -5,9 +5,15 @@ float_t TrishulPlotting::xxfac = 0.1;
 unsigned_t TrishulPlotting::chanout = 512;
 unsigned_t TrishulPlotting::chanin  = 4096;
 
-void TrishulPlotting::Fscrunch (const FloatVector_t& fin, Unsigned_t& nsamps, FloatVector_t& fout) {
+void TrishulPlotting::Fscrunch (const FloatVector_t& fin, const Unsigned_t& nsamps, const Unsigned_t& nchans, FloatVector_t& fout) {
+  unsigned_t chanout = nchans; 
 	unsigned_t df  = chanin / chanout;
 	float_t    rdf = 1.0f / df;
+
+	// reset fout
+	// Let me remind myself about how much time
+	// I wasted in this glaring accumulation bug
+	std::fill (fout.begin(), fout.end(), 0.0f);
 
 #ifdef TS_OMP
 #pragma omp parallel for simd
@@ -87,8 +93,6 @@ void TrishulPlotting::__arange (FloatVector_t& ptr, float_t start, float_t step,
 }
 
 void TrishulPlotting::__zfill (FloatVector_t& ptr, Unsigned_t size) {
-	for (Unsigned_t i = 0; i < size; i++) {
-		ptr.push_back (0.0f);
-	}
+  ptr.resize (size, 0.0f);
 }
 

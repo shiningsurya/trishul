@@ -11,12 +11,12 @@ class TrishulDedisperser {
 		// state
 		bool               _is_plan_initialized;
 		bool               _is_dmlist_ready;
+	public:
 		// search parameters
 		FloatVector_t      dm_list;
 		// single dm
 		float_t                 single_dm;
 		std::vector<Unsigned_t> idelays;
-	public:
 		virtual void CreatePlan (const double_t, const unsigned_t, const float_t, const float_t) = 0;
 		
 		virtual void Execute (const FloatVector_t&, Unsigned_t, FloatVector_t&) = 0;
@@ -40,13 +40,3 @@ class TrishulDedisperser {
 		} 
 };
 
-<<<<<<< Updated upstream
-=======
-struct TrishulDedisperserError : std::exception {
-  char  msg[32];
-  TrishulDedisperserError (const char * _msg) {
-    strcpy (msg, _msg);
-  }
-  const char * what() const noexcept { return msg; }
-};
->>>>>>> Stashed changes

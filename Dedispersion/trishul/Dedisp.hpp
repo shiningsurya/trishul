@@ -20,6 +20,7 @@ class Dedisp : public TrishulDedisperser {
 
 		void Execute (const FloatVector_t&, Unsigned_t, FloatVector_t&) override;
 		void Execute (const ByteVector_t&,  Unsigned_t, ByteVector_t& ) override;
+		void Execute (const ByteVector_t&, unsigned_t, Unsigned_t, FloatVector_t&);
 
 		Unsigned_t MaxSampDelay () noexcept;
 		float_t    MaxTimeDelay () noexcept;

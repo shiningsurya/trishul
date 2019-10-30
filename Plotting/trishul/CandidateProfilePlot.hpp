@@ -60,9 +60,9 @@ class CandidateProfilePlot : protected TrishulPlotting {
 		~CandidateProfilePlot () = default;
 
 		void Read (const Header_t& h, const Trigger_t& t) override;
-		void ReadFB (const FloatVector_t& f, const Unsigned_t& nsamps) override;
-		void ReadBT (const FloatVector_t& f, const Unsigned_t& nsamps) override {
-			throw TrishulError("CandidateProfilePlot::ReadSN not supported");
+		void ReadFB (const FloatVector_t& f, const Unsigned_t& nsamps, const Unsigned_t& offset = 0) override;
+		void ReadBT (const FloatVector_t& f, const Unsigned_t& nsamps, const Unsigned_t& offset = 0) {
+			throw TrishulError("CandidateProfilePlot::ReadBT not supported");
 		}
 
 		void Plot (const string_t& filename) override;

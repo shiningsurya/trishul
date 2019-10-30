@@ -25,6 +25,9 @@ INCLUDES+= -I$(BOOST_INC) -L$(BOOST_LIB)
 ./ob/TestDedisp.o : TestDedisp.cpp
 		$(CXX) $(CFLAGS) $(INCLUDES) -I$(DEDISP_INC) -c $< -o $@
 
+./ob/TestFilterbankDedisp.o : TestFilterbankDedisp.cpp
+		$(CXX) $(CFLAGS) $(INCLUDES) -I$(DEDISP_INC) -c $< -o $@
+
 testcp : $(addprefix ./ob/, TestCandidatePlot.o CandidateProfilePlot.o TrishulPlotting.o \
 								Header.o BSON.o TrishulFormats.o \
 								PackUnpack.o \
@@ -51,6 +54,19 @@ testfbt : $(addprefix ./ob/, TestFBT.o FilterbankBowtiePlot.o TrishulPlotting.o 
 
 		$(LINK) $+ -L$(BOOST_LIB) -Wl,-rpath=$(BOOST_LIB) $(PGPLOT_LD) $(BOOST_LD) -o $@  
 
+testfbd : $(addprefix ./ob/, TestFilterbankDedisp.o FilterbankBowtiePlot.o TrishulPlotting.o \
+								Header.o Filterbank.o TrishulFormats.o \
+								PackUnpack.o \
+								Dedisp.o TrishulDedisperser.o )
+
+		$(LINK) $+ -L$(DEDISP_LIB)  -L$(BOOST_LIB) -Wl,-rpath=$(BOOST_LIB) $(PGPLOT_LD) $(DEDISP_LD) $(BOOST_LD) -o $@  
+
+testmglfb : $(addprefix ./ob/, TestMGL_FB.o \
+								Header.o Filterbank.o TrishulFormats.o \
+								PackUnpack.o \
+								Incoherent.o TrishulDedisperser.o )
+
+		$(LINK) $+ -L$(BOOST_LIB) -Wl,-rpath=$(BOOST_LIB) $(PGPLOT_LD) $(BOOST_LD) -o $@  
 clean:
 		rm -f ./ob/*.o
 

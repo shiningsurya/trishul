@@ -6,6 +6,7 @@ std::ostream& operator<<(std::ostream& os, const Header_t& f) {
 	os << "Antenna      ea" << f.stationid<< std::endl;
 	os << "Nchans=" << f.nchans << "  Nbits=" << f.nbits << std::endl;
 	os << "Source       " << f.name << std::endl;
+	os << "Group        " << f.group << std::endl;
 	return os;
 };
 

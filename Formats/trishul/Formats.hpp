@@ -14,7 +14,7 @@ class TrishulFormats {
 		virtual bool ReadHeader (Header_t& , Trigger_t&) = 0;
 		virtual bool WriteHeader (const Header_t&, const Trigger_t&) = 0;
 
-		virtual Unsigned_t ReadData  (ByteVector_t&, Unsigned_t) = 0;
+		virtual Unsigned_t ReadData  (ByteVector_t&, Unsigned_t, Unsigned_t = 0) = 0;
 		virtual Unsigned_t WriteData (ByteVector_t&, Unsigned_t) = 0;
 };
 

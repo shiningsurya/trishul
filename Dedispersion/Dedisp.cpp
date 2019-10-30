@@ -38,7 +38,7 @@ void Dedisp::CreatePlan (
 			freq_ch1, freq_off
 	);
 	if (error != DEDISP_NO_ERROR ) 
-		throw TrishulDedisperserError("Unable to create plan.");
+		throw TrishulError("Unable to create plan.");
 	// set state
 	_is_plan_initialized = true;
 }
@@ -53,7 +53,9 @@ void Dedisp::Execute (
   // we prefill out(FloatVector_t) to the required size
   // and pass data() to dedisp
   Unsigned_t ddnsamps = nsamps - MaxSampDelay();
-  out.resize ( ddnsamps * dm_list.size(), 0.0f );
+
+  // Let caller take care of sizes
+  // out.resize ( ddnsamps * dm_list.size(), 0.0f );
   // executing
 	error = dedisp_execute (
 			dplan, (dedisp_size) nsamps, 
@@ -62,7 +64,7 @@ void Dedisp::Execute (
 			DEDISP_USE_DEFAULT
 	);
 	if (error != DEDISP_NO_ERROR ) 
-		throw TrishulDedisperserError("Failed to execute!.");
+		throw TrishulError("Failed to execute!.");
 }
 
 void Dedisp::Execute (
@@ -75,7 +77,8 @@ void Dedisp::Execute (
   // we prefill out(FloatVector_t) to the required size
   // and pass data() to dedisp
   Unsigned_t ddnsamps = nsamps - MaxSampDelay();
-  out.resize ( ddnsamps * dm_list.size(), 0 );
+  // Let caller take care of sizes
+  // out.resize ( ddnsamps * dm_list.size(), 0.0f );
   // executing
 	error = dedisp_execute (
 			dplan, (dedisp_size) nsamps, 
@@ -84,6 +87,29 @@ void Dedisp::Execute (
 			DEDISP_USE_DEFAULT
 	);
 	if (error != DEDISP_NO_ERROR ) 
-		throw TrishulDedisperserError("Failed to execute!.");
+		throw TrishulError("Failed to execute!.");
 }
 
+void Dedisp::Execute (
+  const ByteVector_t& in,
+  unsigned_t nbits,
+  Unsigned_t nsamps,
+  FloatVector_t& out) {
+  // dedisp is C and has no support for vector
+  // and we don't want to have raw pointers
+  // so we play a trick here
+  // we prefill out(FloatVector_t) to the required size
+  // and pass data() to dedisp
+  // Let caller take care of sizes
+  // out.resize ( ddnsamps * dm_list.size(), 0.0f );
+  
+  // executing
+	error = dedisp_execute (
+			dplan, (dedisp_size) nsamps, 
+			(const dedisp_byte*) in.data(), nbits,
+			(dedisp_byte*) out.data()     , sizeof(float_t) * 8,
+			DEDISP_USE_DEFAULT
+	);
+	if (error != DEDISP_NO_ERROR ) 
+		throw TrishulError("Failed to execute!.");
+}

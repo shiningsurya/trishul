@@ -138,7 +138,7 @@ bool BSON::WriteHeader (const Header_t& head, const Trigger_t& trig)  {
 	return true;
 }
 
-Unsigned_t BSON::ReadData  (ByteVector_t& data, Unsigned_t bytes) {
+Unsigned_t BSON::ReadData  (ByteVector_t& data, Unsigned_t bytes, Unsigned_t offset) {
 	bool ret = false;
 	auto v_fb = j["fb"];
 	if (bytes == 0) {
@@ -146,9 +146,9 @@ Unsigned_t BSON::ReadData  (ByteVector_t& data, Unsigned_t bytes) {
 		bytes = v_fb.size();
 		ret = true;
 	}
-	data.reserve (bytes);
+	data.resize (bytes + offset, 0);
 
-	std::copy (v_fb.begin(), v_fb.begin() + bytes, std::back_inserter(data));
+	std::copy (v_fb.begin(), v_fb.begin() + bytes, data.begin());
 
 	d_readtimes++;
 	return ret ? v_fb.size() : v_fb.size() - bytes;

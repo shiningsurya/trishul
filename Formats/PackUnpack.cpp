@@ -1,6 +1,9 @@
 #include "trishul.hpp"
 #include "trishul/PackUnpack.hpp"
 
+// debug
+//#include <bitset>
+
 // Jenet Anderson numbers
 static inline Byte_t quant2bit (const float_t& x) {
 	if(x < -0.9674) return 0;
@@ -41,11 +44,12 @@ static inline Byte_t pack2bit (const float_t& a, const float_t& b, const float_t
 	Byte_t b_d = ( ::quant2bit (d) & 0x03 ) << 0;
 	return b_a | b_b | b_c | b_d;
 }
+// XXX endian-ness
 static inline void unpack2bit (float_t& a, float_t& b, float_t& c, float_t& d, const Byte_t& dc) {
-	a  = (float_t) (dc & 3); 
-	b  = (float_t) ((dc & 12) >> 2); 
-	c  = (float_t) ((dc & 48) >> 4); 
-	d  = (float_t) ((dc & 192) >> 6); 
+	d  = (float_t) (dc & 3); 
+	c  = (float_t) ((dc & 12) >> 2); 
+	b  = (float_t) ((dc & 48) >> 4); 
+	a  = (float_t) ((dc & 192) >> 6); 
 }
 
 static inline Byte_t pack4bit (const float_t& a, const float_t& b) {
@@ -66,7 +70,8 @@ static inline void unpack8bit (float_t& a, const Byte_t& dc) {
 // 2BIT
 void Unpack2Bit (const ByteVector_t& bin, FloatVector_t& fout) {
 	// reserve
-	fout.resize (bin.size() * 8 / 2);
+	// let caller reserve
+	// fout.resize (bin.size() * 8 / 2, 0.0f);
 	Unsigned_t i = 0;
 	// work
 	float_t a,b,c,d;
@@ -76,6 +81,8 @@ void Unpack2Bit (const ByteVector_t& bin, FloatVector_t& fout) {
 		fout[i++] = b;
 		fout[i++] = c;
 		fout[i++] = d;
+		// debug
+		// std::cout << std::bitset<8>(dc) << "->" << a << " " << b << " " << c << " " << d << std::endl;
 	}
 }
 void Pack2Bit  (const FloatVector_t& fin, ByteVector_t& bout) {
@@ -84,7 +91,6 @@ void Pack2Bit  (const FloatVector_t& fin, ByteVector_t& bout) {
 	// work
 	Unsigned_t ii = 0;
 	float_t a,b,c,d;
-		fout.push_back (a);
 	for(Unsigned_t it = 0; it < fin.size();) {
 		a = fin[it++]; b = fin[it++];
 		c = fin[it++]; d = fin[it++];

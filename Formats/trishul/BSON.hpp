@@ -25,7 +25,7 @@ class BSON : public TrishulFormats {
 		// override
 		bool ReadHeader (Header_t& , Trigger_t& ) override;
 		bool WriteHeader (const Header_t&, const Trigger_t&) override;
-		Unsigned_t ReadData  (ByteVector_t&, Unsigned_t )override;
+		Unsigned_t ReadData  (ByteVector_t&, Unsigned_t, Unsigned_t)override;
 		Unsigned_t WriteData (ByteVector_t&, Unsigned_t ) override;
 };
 
