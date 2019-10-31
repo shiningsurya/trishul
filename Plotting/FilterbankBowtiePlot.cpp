@@ -41,11 +41,8 @@ void fbt::Plot (const string_t& filename) {
 			tleft, tright,
 			axfreq.front(), axfreq.back()
 	);
-	std::cout << tleft << ",";
-	std::cout << tright << ",";
-	std::cout << axfreq.front() << ",";
-	std::cout << axfreq.back() << std::endl;
 	cpgbox ("BCN",0.0,0,"BCNV",0.0,0);
+	//cpglab ("Time (s)", "Freq (MHz)", "");
 	cpgctab (
 			heat_l.data(), heat_r.data(), 
 			heat_g.data(), heat_b.data(), 
@@ -55,18 +52,13 @@ void fbt::Plot (const string_t& filename) {
 			1, chanout, 1, nsamps,
 			cmin, cmax, tr_fb
 	);
-	cpglab ("Time (s)", "Freq (MHz)", "");
-	//cpgmtxt("B",2.5,.5,0.5,"Time (s)");
-	//cpgmtxt("L",4,0.5,0.5,"Freq (MHz)");
+	cpgmtxt("B",2.5,.5,0.5,"Time (s)");
+	cpgmtxt("L",4,0.5,0.5,"Freq (MHz)");
 	// BANDSHAPE
 	cpgsci(1); // color index
 	cpgsvp(0.75, 0.90, 0.1, 0.5); // bandshape
 	__ranger (fb_fshape.cbegin(), fb_fshape.cend(), xxmin, xxmax);
 	cpgswin (xxmin, xxmax, axfreq.front(), axfreq.back());
-	std::cout << xxmin << ",";
-	std::cout << xxmax << ",";
-	std::cout << axfreq.front() << ",";
-	std::cout << axfreq.back() << std::endl;
 	cpgbox("BCN",0.0,0,"BCV",0.0,0);
 	cpgline(chanout, fb_fshape.data(), axfreq.data());
 	cpgmtxt("B",2.5,.5,0.5,"Intensity (a.u.)");
@@ -77,10 +69,6 @@ void fbt::Plot (const string_t& filename) {
 			tleft, tright,
 			axdm.front(), axdm.back()
 	);
-	std::cout << tleft << ",";
-	std::cout << tright << ",";
-	std::cout << axdm.front() << ",";
-	std::cout << axdm.back() << std::endl;
 	cpgbox ("BC",0.0,0,"BCNV",0.0,0);
 	cpgctab (
 			heat_l.data(), heat_r.data(), 
@@ -106,10 +94,6 @@ void fbt::Plot (const string_t& filename) {
 	cpgsvp(0.75, 0.90, 0.5, 0.9); // bandshape
 	__ranger (bt_fshape.cbegin(), bt_fshape.cend(), xxmin, xxmax);
 	cpgswin (xxmin, xxmax, axdm.front(), axdm.back());
-	std::cout << xxmin << ",";
-	std::cout << xxmax << ",";
-	std::cout << axdm.front() << ",";
-	std::cout << axdm.back() << std::endl;
 	cpgbox("BCM",0.0,0,"BCV",0.0,0);
 	cpgline(axdm.size(), bt_fshape.data(), axdm.data());
 	cpgmtxt("B",2.5,.5,0.5,"Max per DM"); 

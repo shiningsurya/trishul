@@ -78,7 +78,6 @@ int main () {
   fbp.ReadFB (fbdata, ddnsamps, 0L);
   fbp.ReadBT (btdata, ddnsamps, 0L);
   fbp.Plot (tplotname);
-  return 0;
 
   // overlap
   auto _i = std::copy (ofbdata.begin() + gulp_size - overlap_size, ofbdata.begin() + gulp_size, ofbdata.begin());
