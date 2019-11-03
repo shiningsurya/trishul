@@ -23,7 +23,7 @@ fbt::FilterbankBowtiePlot (float_t charh_) : charh(charh_) {
 	count = 0;
 	// times
 	tleft = tright = 0.0f;
-};
+}
 
 void fbt::Plot (const string_t& filename) {
 	if (count++) cpgpage ();

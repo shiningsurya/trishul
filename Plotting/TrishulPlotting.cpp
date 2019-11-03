@@ -73,6 +73,30 @@ void TrishulPlotting::BMaxShape (const FloatVector_t& f, const Unsigned_t& nsamp
 		bshape[ichan] = *std::max_element (i, j);
 	}
 }
+void TrishulPlotting::ABMaxShape (const FloatVector_t& f, const Unsigned_t& nsamps, const unsigned_t& nchans,  & tshape, FloatVector_t& bshape) {
+	// temp
+	float_t curr = 0.0f;
+	float_t tmin = std::numeric_limits<float_t>::min ();
+	float_t fmin = std::numeric_limits<float_t>::min ();
+
+	// fb traversal
+	for (Unsigned_t isamp = 0; isamp < nsamps; isamp++) {
+		for (unsigned_t ichan = 0; ichan < nchans; ichan++) {
+			// read
+			curr = f[isamp*nchans + ichan];
+
+			// logic
+			if (curr < tmin) {
+				tmin = curr;
+				tshape[isamp] = curr;
+			}
+			if (curr < fmin) {
+				fmin = curr;
+				fshape[ichan] = curr;
+			}
+		}
+	}
+}
 void TrishulPlotting::__ranger (FloatVector_t::const_iterator i, FloatVector_t::const_iterator j, 
 		float_t& xxmin,
 		float_t& xxmax) {
