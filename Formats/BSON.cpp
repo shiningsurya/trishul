@@ -73,6 +73,8 @@ bool BSON::ReadHeader (Header_t& h, Trigger_t& t) {
 	t.width     = j["width"];
 	// header time
 	h.tsamp     = j["time"]["tsamp"];
+	// tsamp is always << 1
+	if (h.tsamp >= 1) h.tsamp /= 1E6;
 	// header frequency
 	h.fch1      = j["frequency"]["fch1"];
 	h.foff      = j["frequency"]["foff"];

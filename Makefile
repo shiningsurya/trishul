@@ -16,8 +16,15 @@ INCLUDES+= -I$(BOOST_INC) -L$(BOOST_LIB)
 		$(CXX) $(CFLAGS) $(INCLUDES) -I$(PGPLOT_INC) -L$(PGPLOT_LIB) \
 		-L$(PGFORTRAN_LIB) -c $< -o $@
 
+./ob/CandidatePlot.o :  CandidatePlot.cpp
+		$(CXX) $(CFLAGS) $(INCLUDES) -I$(DEDISP_INC) -I$(PGPLOT_INC) -L$(PGPLOT_LIB) \
+		-L$(PGFORTRAN_LIB) -c $< -o $@
+
 ./ob/TestCandidatePlot.o : TestCandidatePlot.cpp
-		$(CXX) $(CFLAGS) $(INCLUDES) $(JSONINC) -c $< -o $@
+		$(CXX) $(CFLAGS) $(INCLUDES)   $(JSONINC) -c $< -o $@
+
+./ob/TestCPlot.o : TestCPlot.cpp
+		$(CXX) $(CFLAGS) $(INCLUDES) -I$(DEDISP_INC) $(JSONINC) -c $< -o $@
 
 ./ob/Dedisp.o : Dedisp.cpp
 		$(CXX) $(CFLAGS) $(INCLUDES) -I$(DEDISP_INC) -c $< -o $@
@@ -28,12 +35,19 @@ INCLUDES+= -I$(BOOST_INC) -L$(BOOST_LIB)
 ./ob/TestFilterbankDedisp.o : TestFilterbankDedisp.cpp
 		$(CXX) $(CFLAGS) $(INCLUDES) -I$(DEDISP_INC) -c $< -o $@
 
+testfcp : $(addprefix ./ob/, TestCPlot.o CandidatePlot.o TrishulPlotting.o \
+								Header.o BSON.o TrishulFormats.o \
+								PackUnpack.o Incoherent.o\
+								TrishulDedisperser.o Dedisp.o)
+
+		$(LINK) $+ -L$(BOOST_LIB) -L$(DEDISP_LIB) -Wl,-rpath=$(BOOST_LIB) $(PGPLOT_LD) $(DEDISP_LD) $(BOOST_LD) -o $@  
+
 testcp : $(addprefix ./ob/, TestCandidatePlot.o CandidateProfilePlot.o TrishulPlotting.o \
 								Header.o BSON.o TrishulFormats.o \
 								PackUnpack.o \
 								Incoherent.o TrishulDedisperser.o )
 
-		$(LINK) $+ -L$(BOOST_LIB) -Wl,-rpath=$(BOOST_LIB) $(PGPLOT_LD) $(BOOST_LD) -o $@  
+		$(LINK) $+ $(LD_FLAGS) -L$(BOOST_LIB) -Wl,-rpath=$(BOOST_LIB) $(PGPLOT_LD) $(BOOST_LD) -o $@  
 
 testdd : $(addprefix ./ob/, TestDedisp.o \
 								Header.o BSON.o TrishulFormats.o \

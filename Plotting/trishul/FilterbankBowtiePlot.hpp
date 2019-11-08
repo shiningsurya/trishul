@@ -1,8 +1,6 @@
 #pragma once
 #include "trishul.hpp"
 #include "trishul/TrishulPlotting.hpp"
-// pgplot
-#include "cpgplot.h"
 
 
 class FilterbankBowtiePlot : protected TrishulPlotting {
@@ -50,7 +48,6 @@ class FilterbankBowtiePlot : protected TrishulPlotting {
 		char         group[16];
 	public:
 		FilterbankBowtiePlot (float_t _charh = 0.65);
-		~FilterbankBowtiePlot () { if (count) cpgend (); }
 
 		void Read (const Header_t& h, const Trigger_t& t) override;
 		void ReadFB (const FloatVector_t& f, const Unsigned_t& nsamps, const Unsigned_t& offset = 0) override;

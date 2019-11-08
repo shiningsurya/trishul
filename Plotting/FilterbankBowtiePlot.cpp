@@ -4,6 +4,9 @@
 #include <cstring>
 #include <cmath>
 
+// pgplot
+#include "cpgplot.h"
+
 using fbt = FilterbankBowtiePlot;
 
 constexpr std::array<float,5> fbt::heat_l;
@@ -11,6 +14,7 @@ constexpr std::array<float,5> fbt::heat_r;
 constexpr std::array<float,5> fbt::heat_g;
 constexpr std::array<float,5> fbt::heat_b;
 
+fbt::~FilterbankBowtiePlot () { if (count) cpgend (); }
 
 fbt::FilterbankBowtiePlot (float_t charh_) : charh(charh_) {
 	std::fill (tr_fb, tr_fb + 6, 0.0f);

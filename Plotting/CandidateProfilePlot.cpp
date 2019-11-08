@@ -129,7 +129,7 @@ void ccp::ReadFB (const FloatVector_t& f, const Unsigned_t& _nsamps, const Unsig
 	// time axis
 	__arange (axtime, 0.0f, (float_t)( tsamp/1E6 ), nsamps);
 	// fscrunch
-	Fscrunch (f, nsamps, fb);
+	Fscrunch (f, nsamps, chanout, fb);
 	// ABShape
 	ABShape (fb, nsamps, chanout, fb_tshape, fb_fshape);
 }

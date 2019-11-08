@@ -47,3 +47,6 @@ Makefile.inc
 # ps/png
 *.png
 *.ps
+
+# dat
+*.dat

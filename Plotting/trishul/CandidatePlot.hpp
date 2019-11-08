@@ -6,6 +6,14 @@
 
 class CandidatePlot : protected TrishulPlotting {
 	private:
+		// viewports
+		float_t      charh;
+		// images
+		float_t      tr_fb[6], tr_bt[6];
+		unsigned_t   txtrow;
+		unsigned_t   csize;
+		unsigned_t   cmin;
+		unsigned_t   cmax;
 		// parameters
 		float_t      sn;
 		float_t      dm;
@@ -44,12 +52,13 @@ class CandidatePlot : protected TrishulPlotting {
 		FloatVector_t   fb_tshape;
 		FloatVector_t   fb_fshape;
 		FloatVector_t   fb;
-		FloatVector_t   bt_tshape;
 		FloatVector_t   bt_fshape;
+		//FloatVector_t   bt_tshape;
 		FloatVector_t   bt;
 		float_t         tleft;
 		float_t         tright;
 		FloatVector_t   axfreq;
+		FloatVector_t   axtime;
 		FloatVector_t   axdm;
 
 	public:

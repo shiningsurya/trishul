@@ -16,9 +16,12 @@ class TrishulPlotting {
 		static void ABShape (const FloatVector_t& f, const Unsigned_t& nsamps, const unsigned_t& nchans, FloatVector_t& tshape, FloatVector_t& bshape);
 		static void BShape (const FloatVector_t& f, const Unsigned_t& nsamps, const unsigned_t& nchans, FloatVector_t& bshape);
 		static void BMaxShape (const FloatVector_t& f, const Unsigned_t& nsamps, const unsigned_t& nchans, FloatVector_t& bshape);
-		static void ABMaxShape (const FloatVector_t& f, const Unsigned_t& nsamps, const unsigned_t& nchans, & tshape, FloatVector_t& bshape);
+		static void ABMaxShape (const FloatVector_t& f, const Unsigned_t& nsamps, const unsigned_t& nchans, FloatVector_t& tshape, FloatVector_t& bshape);
 
 		static void __ranger (FloatVector_t::const_iterator i, FloatVector_t::const_iterator j, 
+				float_t& xxmin,
+				float_t& xxmax);
+		static void __ranger (FloatVector_t::const_iterator i, Unsigned_t j, 
 				float_t& xxmin,
 				float_t& xxmax);
 		static void __arange (FloatVector_t& ptr, float_t start, float_t step, Unsigned_t size);

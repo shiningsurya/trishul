@@ -1,10 +1,22 @@
-#include "trishul.hpp"
-#include "trishul/BSON.hpp"
+#include <iostream>
+using std::cout;
+using std::endl;
+#include <mgl2/mgl.h>
+//#include "trishul.hpp"
+//#include "trishul/BSON.hpp"
 
 #define enterprise_test "/home/shining/work/vlite/activity400dm/20191013_122557_muos_ea99_dm416.29_sn265.45.fbson"
 #define vlite_test "/home/vlite-master/surya/analysis/fbsons/activity400dm/20191013_122557_muos_ea99_dm416.29_sn265.45.fbson"
 
+void sample (mglGraph& gr) {
+}
+
 int main() {
+  mglGraph gr;
+  sample (gr);
+  gr.WritePNG ("/users/sbethapu/t.png");
+  return 0;
+/**
 	string_t file();
 	// bson
 	BSON f;
@@ -22,6 +34,6 @@ int main() {
 	std::cout << tt;
 	std::cout << "NSAMPS: " << std::endl;
 	std::cout << f.nsamps << std::endl;
-
 	return 0;
+**/
 }
