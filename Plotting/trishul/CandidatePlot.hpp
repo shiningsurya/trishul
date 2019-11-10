@@ -1,17 +1,18 @@
 #pragma once
 #include "trishul.hpp"
 #include "trishul/TrishulPlotting.hpp"
-// pgplot
-#include "cpgplot.h"
+
+// mathgl
+#include <mgl2/mgl.h>
 
 class CandidatePlot : protected TrishulPlotting {
 	private:
 		// viewports
 		float_t      charh;
+		char         _fn[256];
+		mglGraph     gr;
 		// images
-		float_t      tr_fb[6], tr_bt[6];
 		unsigned_t   txtrow;
-		unsigned_t   csize;
 		unsigned_t   cmin;
 		unsigned_t   cmax;
 		// parameters
@@ -27,22 +28,6 @@ class CandidatePlot : protected TrishulPlotting {
 		float_t      duration;
 		unsigned_t   nbits;
 		Unsigned_t   nsamps;
-		// cmaps
-		constexpr static std::array<float,5> heat_l = {0.0, 0.2, 0.4, 0.6, 1.0} ;
-		constexpr static std::array<float,5> heat_r = {0.0, 0.5, 1.0, 1.0, 1.0} ;
-		constexpr static std::array<float,5> heat_g = {0.0, 0.0, 0.5, 1.0, 1.0} ;
-		constexpr static std::array<float,5> heat_b = {0.0, 0.0, 0.0, 0.3, 1.0} ;
-		// cmap
-		constexpr static std::array<float,6> dync_l = {0.0, 0.2, 0.4, 0.6, 0.8, 1.0} ;
-		constexpr static std::array<float,6> dync_r = {0.0f, 0.5f, 0.5f, 1.0f, 1.0f, 1.0f} ;
-		constexpr static std::array<float,6> dync_g = {0.0f, 0.5f, 0.0f, 0.5f, 1.0f, 1.0f} ;
-		constexpr static std::array<float,6> dync_b = {0.0f, 0.5f, 0.0f, 0.0f, 0.3f, 1.0f} ;
-		constexpr static std::array<float,10> anrb_l = { 0.0, 0.035, 0.045, 0.225, 0.4, 0.41, 0.6, 0.775, 0.985, 1.0 };
-		constexpr static std::array<float,10> anrb_r = { 1.0, 1.0, 0.947, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0 };
-		constexpr static std::array<float,10> anrb_g = { 1.0, 0.844, 0.8, 0.0, 0.946, 1.0, 1.0, 1.0, 0.0, 0.0 };
-		constexpr static std::array<float,10> anrb_b = { 1.0, 1.0, 1.0, 1.0, 1.0, 0.95, 0.0, 0.0, 0.0, 0.0 };
-		constexpr static float_t constrast = 1;
-		constexpr static float_t brightness = 0.5;
 		// ranger
 		float_t      xxfac;
 		float_t      xxmin;
@@ -50,19 +35,21 @@ class CandidatePlot : protected TrishulPlotting {
 		float_t      dd_range;
 		// plot
 		FloatVector_t   fb_tshape;
+		mglData         _fb_tshape;
 		FloatVector_t   fb_fshape;
+		mglData         _fb_fshape;
 		FloatVector_t   fb;
-		FloatVector_t   bt_fshape;
-		//FloatVector_t   bt_tshape;
+		mglData         _fb;
 		FloatVector_t   bt;
+		mglData         _bt;
 		float_t         tleft;
 		float_t         tright;
-		FloatVector_t   axfreq;
-		FloatVector_t   axtime;
 		FloatVector_t   axdm;
+		float_t         flow;
+		float_t         fhigh;
 
 	public:
-		CandidatePlot (float_t _charh = 0.65);
+		CandidatePlot (float_t _charh = 0.65, unsigned_t _w= 1200, unsigned_t _h= 900);
 		~CandidatePlot () = default;
 
 		void Read (const Header_t& h, const Trigger_t& t) override;
@@ -71,8 +58,6 @@ class CandidatePlot : protected TrishulPlotting {
 
 		void SetDM (const FloatVector_t& dms) { 
 			axdm = dms;
-			tr_bt[3] = axdm.front();
-			tr_bt[4] = (axdm.back() - axdm.front()) / axdm.size();
 		}
 
 		void Plot (const string_t& filename) override;

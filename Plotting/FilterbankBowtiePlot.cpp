@@ -71,6 +71,10 @@ void fbt::ReadFB (const FloatVector_t& f, const Unsigned_t& _nsamps, const Unsig
 	// reserve
 	// nsamps
 	auto fb_size   = nsamps * chanout;
+	std::cout << nsamps << std::endl;
+	std::cout << chanout<< std::endl;
+	std::cout << fb_size<< std::endl;
+	std::cout << fb.size()<< std::endl;
 	if (fb.size() != fb_size)
     __zfill (fb, fb_size);
 	// fscrunch
@@ -94,7 +98,7 @@ void fbt::ReadBT (const FloatVector_t& f,
 	}
 	// copy 
 	bt = f;
-  _bt.Link (bt.data(), axdm.size(), nsamps);
+  _bt.Link (bt.data(), nsamps, axdm.size());
 }
 
 void fbt::Read (const Header_t& h, const Trigger_t& t) {

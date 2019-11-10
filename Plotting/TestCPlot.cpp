@@ -6,7 +6,17 @@
 #include "trishul/Incoherent.hpp"
 #include "trishul/Dedisp.hpp"
 
+#define TIMING
+#ifdef TIMING
+#include "trishul/Timer.hpp"
+#endif 
+
 int main() {
+#ifdef TIMING
+  Timer tincoh ("Incoherent");
+  Timer tdedisp ("Dedisp");
+  Timer tPlot ("mglPlot");
+#endif 
 	string_t file("/home/vlite-master/surya/analysis/ifrb/wtf/20191017_210915_muos_ea11_dm80.13_sn28.75.fbson");
 	// bson
 	BSON f;
@@ -23,6 +33,7 @@ int main() {
 	f.ReadHeader (hh, tt);
 	std::cout << "Header: " << std::endl;
 	std::cout << hh;
+	std::cout << "tsamp=" << hh.tsamp << std::endl;
 	Unsigned_t nsamps = f.nsamps / hh.nchans * 8 / hh.nbits;
 	std::cout << "\tnsamps=" << nsamps << std::endl;
 	// read data
@@ -36,7 +47,13 @@ int main() {
 	Incoherent incoh;
 	incoh.CreatePlan (hh.tsamp, hh.nchans, hh.fch1, hh.foff);
 	incoh.Delays (tt.dm);
+#ifdef TIMING
+  tincoh.Start ();
+#endif 
 	incoh.Execute (data, nsamps, ddata);
+#ifdef TIMING
+  tincoh.StopPrint (std::cout);
+#endif 
 	// dedisp
 	float_t dwidth = 50;
 	Dedisp dd;
@@ -49,22 +66,36 @@ int main() {
 	dd.SetDM (dmlow, dmhigh, dm_count);
 	Unsigned_t maxdelay = dd.MaxSampDelay ();
 	Unsigned_t ddnsamps = nsamps - maxdelay;
+	std::cout << "ddnsamps  :" << ddnsamps<< std::endl;
 	std::cout << "Maxd  :" << maxdelay << std::endl;
 	std::cout << "MaxdT :" << maxdelay*hh.tsamp << std::endl;
 	std::cout << "DMsize:" << dd.dm_list.size() << std::endl;
 	FloatVector_t tdata (dm_count * ddnsamps);
+#ifdef TIMING
+  tdedisp.Start ();
+#endif 
 	dd.Execute (bdata, hh.nbits, nsamps, tdata);
+#ifdef TIMING
+  tdedisp.StopPrint (std::cout);
+#endif 
 	////////////////////// 
 	if ( maxdelay >= nsamps) 
 	  throw TrishulError ("Nsamps too small for the dm range given!");
 	// plotting
 	CandidatePlot cp;
 	cp.SetDM (dd.dm_list);
+	std::cout << "DMsize:" << dd.dm_list.size() << std::endl;
 	cp.Read (hh, tt);
-	Unsigned_t plotnsamps = maxdelay;
+	Unsigned_t plotnsamps = ddnsamps;
 	cp.ReadFB (ddata, plotnsamps);
 	cp.ReadBT (tdata, plotnsamps);
-	cp.Plot ("/users/sbethapu/haha.png/png");
+#ifdef TIMING
+  tPlot.Start ();
+#endif 
+	cp.Plot ("/users/sbethapu/trishul_stuff/mgl_candplot");
+#ifdef TIMING
+  tPlot.StopPrint (std::cout);
+#endif 
 	//
 	return 0;
 }

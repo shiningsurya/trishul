@@ -26,8 +26,8 @@ class FilterbankBowtiePlot : protected TrishulPlotting {
 		// parameters
 		float_t      tsamp;
 		unsigned_t   stationid;
-		char         name[16];
-		char         group[16];
+		char         name[36];
+		char         group[36];
 	public:
 		FilterbankBowtiePlot (float_t _charh = 0.65, unsigned_t _w= 1200, unsigned_t _h= 900);
 		~FilterbankBowtiePlot () = default;

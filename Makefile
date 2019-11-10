@@ -37,10 +37,10 @@ INCLUDES+= -I$(BOOST_INC) -L$(BOOST_LIB)
 
 testfcp : $(addprefix ./ob/, TestCPlot.o CandidatePlot.o TrishulPlotting.o \
 								Header.o BSON.o TrishulFormats.o \
-								PackUnpack.o Incoherent.o\
+								PackUnpack.o Incoherent.o Timer.o Globals.o\
 								TrishulDedisperser.o Dedisp.o)
 
-		$(LINK) $+ -L$(BOOST_LIB) -L$(DEDISP_LIB) -Wl,-rpath=$(BOOST_LIB) $(PGPLOT_LD) $(DEDISP_LD) $(BOOST_LD) -o $@  
+		$(LINK) $+ -L$(BOOST_LIB) -L$(DEDISP_LIB) -Wl,-rpath=$(BOOST_LIB) $(LD_FLAGS) $(DEDISP_LD) $(BOOST_LD) -o $@  
 
 testcp : $(addprefix ./ob/, TestCandidatePlot.o CandidateProfilePlot.o TrishulPlotting.o \
 								Header.o BSON.o TrishulFormats.o \

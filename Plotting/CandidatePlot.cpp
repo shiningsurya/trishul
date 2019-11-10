@@ -2,22 +2,16 @@
 #include <cmath>
 #include "trishul/CandidatePlot.hpp"
 
+#include "trishul/Globals.hpp"
+
 using cp = CandidatePlot;
 
-constexpr std::array<float,5> cp::heat_l;
-constexpr std::array<float,5> cp::heat_r;
-constexpr std::array<float,5> cp::heat_g;
-constexpr std::array<float,5> cp::heat_b;
-constexpr std::array<float,10> cp::anrb_l;
-constexpr std::array<float,10> cp::anrb_r;
-constexpr std::array<float,10> cp::anrb_g;
-constexpr std::array<float,10> cp::anrb_b;
-
-
-
-cp::CandidatePlot (float_t charh_) : charh(charh_) {
-	std::fill (tr_fb, tr_fb + 6, 0.0f);
-	std::fill (tr_bt, tr_bt + 6, 0.0f);
+cp::CandidatePlot (
+  float_t charh_,
+  unsigned_t w,
+  unsigned_t h
+  ) : charh(charh_),
+  gr(0, w, h) {
 	// __ranger factor
 	xxfac = 0.1f;	
 	// chanout
@@ -27,116 +21,61 @@ cp::CandidatePlot (float_t charh_) : charh(charh_) {
 }
 
 void cp::Plot (const string_t& filename) {
-	cpgbeg (0,filename.c_str(),1,1); 
-	cpgsch (charh); 
-	cpgask (0);
-	cpgpap (10.25, 8.5/11.0);
-	cpgstbg (2);
+	// global properties
+  gr.SetScaleText (true);
 	////////////////////////////////////////////////////////////////
-	// De-dispersed waterfall 
-	cpgsvp (0.05, 0.35, 0.1, 0.6);
-	cpgswin (
-			axtime.front(), axtime.back(),
-			axfreq.front(), axfreq.back()
-	);
-	cpgbox ("BCN",0.0,0,"BCNV",0.0,0);
-	cpgctab (
-			heat_l.data(), heat_r.data(), 
-			heat_g.data(), heat_b.data(), 
-			heat_l.size(), constrast, brightness);
-	cpgimag (fb.data(), chanout, nsamps,
-			1, chanout, 1, nsamps,
-			cmin, cmax, tr_fb
-	);
-	cpgmtxt("B",2.5,.5,0.5,"Time (s)");
-	cpgmtxt("L",4,0.5,0.5,"Freq (MHz)");
-	// Bowtie
-	cpgsvp(0.55, 0.9, 0.1, 0.4);
-	cpgswin (
-			axtime.front(), axtime.back(),
-			axdm.front(), axdm.back()
-	);
-	cpgbox ("BCN",0.0,0,"BCNV",0.0,0);
-	cpgctab (
-			anrb_l.data(), anrb_r.data(), 
-			anrb_g.data(), anrb_b.data(), 
-			anrb_l.size(), constrast, brightness);
-	__ranger (bt.cbegin(), nsamps*axdm.size(), xxmin, xxmax);
-	cpgimag (bt.data(), axdm.size(), nsamps,
-			1, axdm.size(), 1, nsamps,
-			xxmin, xxmax, tr_bt
-	);
-	cpgmtxt("B",2.5,.5,0.5,"Time (s)");
-	cpgmtxt("L",4,0.5,0.5,"Freq (MHz)");
-	// Bandshape
-	cpgsvp(0.35, 0.4, 0.1, 0.6);
-	__ranger (fb_fshape.cbegin(), fb_fshape.cend(), xxmin, xxmax);
-	cpgswin (xxmin, xxmax, axfreq.front(), axfreq.back());
-	cpgbox("BCN",0.0,0,"BCV",0.0,0);
-	cpgline(chanout, fb_fshape.data(), axfreq.data());
-	cpgmtxt("B",2.5,.5,0.5,"Intensity (a.u.)"); // group at middle
-	cpgmtxt("T",1.0,.5,0.5, "Bandshape");
-	// Bowtie-bshape
-	cpgsvp(0.45, 0.55, 0.1, 0.4);
-	__ranger (bt_fshape.cbegin(), bt_fshape.cend(), xxmin, xxmax);
-	cpgswin (xxmin, xxmax, axdm.front(), axdm.back());
-	cpgbox("BCM",0.0,0,"BCV",0.0,0);
-	cpgline(axdm.size(), bt_fshape.data(), axdm.data());
-	cpgmtxt("B",2.5,.5,0.5,"Max per DM"); 
+	// DE-DEDISPERSED WATERFALL
+  gr.SubPlot (2,1,0, "<");
+  gr.ColumnPlot (2,1);
+	gr.SetRanges (tleft, tright, fhigh, flow);
+	gr.Box(); gr.Axis();
+	//gr.SetRange ('c', cmin, );
+	gr.Dens (_fb,"BbcyrR");
+	gr.Label ('x', "Time (s)", 0);
+	gr.Label ('y', "Freq (MHz)", 0);
+	// BOWTIE
+	gr.Perspective(0.05);
+	gr.ColumnPlot (2,0, 0.2);
+	gr.Rotate (15,0);
+	gr.SetAutoRanges (tleft, tright, axdm.front(), axdm.back());
+	gr.SetRange ('z', _bt);
+	gr.SetRange ('c', _bt);
+	gr.Surf(_bt, "BbcyrR");
+	gr.Perspective(0.0);
+	gr.Axis("y");
+	gr.Label ('y', "DM (pc/cc)", 0);
+	gr.SetTicks ('y', 20, 7, axdm.front()+5);
 	// Profile
-	cpgsvp(0.05, 0.35, 0.6, 1.);
-	__ranger (fb_tshape.cbegin(), fb_tshape.cend(), xxmin, xxmax);
-	cpgswin (axtime.front(), axtime.back(), xxmin, xxmax);
-	cpgbox ("A",0.0,0,"NV",0.0,0);
-	cpgline (nsamps, axtime.data(), fb_tshape.data()); 
-	cpgmtxt("R",1.2,0.5,0.5,"Intensity (a.u.)");
-	cpgmtxt("T",.3,.5,0.5, "De-Dispersed Integrated Profile and Waterfall");
-	//cpgmtxt("T",2.0,0.0,0.5,group);
+  gr.SubPlot (2,1,1, "");
+  gr.ColumnPlot (2,0);
+  gr.SetRange ('x', tleft, tright);
+  gr.SetRange ('y', _fb_tshape);
+  gr.Plot (_fb_tshape);
+	gr.Axis("x");
 	// text
-	cpgsvp(0.45, 0.9, 0.4, 1.0); // Meta data
-	txtrow = 0;
-	float_t  txtheight = -1.5 * charh;
-	char txt[256];
-	cpgscf (2);
-	cpgsch (3.0);
-	snprintf(txt, 256, "S/N: %3.2f", sn);
-	cpgmtxt("T",txtheight * txtrow++, 0.12, 0.0, txt);
-	snprintf(txt, 256, "DM: %3.2f pc/cc", dm);
-	cpgmtxt("T",txtheight * txtrow++, 0.12, 0.0, txt);
-	snprintf(txt, 256, "Width: %3.2f ms", width*1e3f);
-	cpgmtxt("T",txtheight * txtrow++, 0.12, 0.0, txt);
-	snprintf(txt, 256, "Peak Time: %4.3f s", peak_time);
-	cpgmtxt("T",txtheight * txtrow++, 0.12, 0.0, txt);
-	snprintf(txt, 256, "Antenna: ea%02d", stationid);
-	cpgmtxt("T",txtheight * txtrow++, 0.12, 0.0, txt);
-	snprintf(txt, 256, "Source: %s", name);
-	cpgmtxt("T",txtheight * txtrow++, 0.12, 0.0, txt);
-	snprintf(txt, 256, "Total time: %3.2f s", duration);
-	cpgmtxt("T",txtheight * txtrow++, 0.12, 0.0, txt);
-	snprintf(txt, 256, "Tstart(MJD): %3.2f", tstart);
-	cpgmtxt("T",txtheight * txtrow++, 0.12, 0.0, txt);
-	snprintf(txt, 256, "NBits: %d", nbits);
-	cpgmtxt("T",txtheight * txtrow++, 0.12, 0.0, txt);
-	snprintf(txt, 256, "NChans: %d", chanin);
-	cpgmtxt("T",txtheight * txtrow++, 0.12, 0.0, txt);
+	float_t xx = 0.8, yy=1.0, off=0.04;
+	snprintf(_fn, sizeof(_fn), "S/N: %3.2f", sn);
+	gr.Puts (xx, yy, _fn,":aC", 2.8); yy -= off;
+	snprintf(_fn, sizeof(_fn), "DM: %3.2f pc/cc", dm);
+	gr.Puts (xx, yy, _fn,":aC", 2.8); yy -= off;
+	snprintf(_fn, sizeof(_fn), "Width: %3.2f ms", width*1e3f);
+	gr.Puts (xx, yy, _fn,":aC", 2.8); yy -= off;
+	snprintf(_fn, sizeof(_fn), "Antenna: ea%02d", stationid);
+	gr.Puts (xx, yy, _fn,":aC", 2.8); yy -= off;
+	snprintf(_fn, sizeof(_fn), "Source: %s", name);
+	gr.Puts (xx, yy, _fn,":aC", 2.8); yy -= off;
+	snprintf(_fn, sizeof(_fn), "%s", 
+    escape_string(group, sizeof(group)).c_str());
+	gr.Puts (0.3, 0.9, _fn,":AC", 2.8);
 	////////////////////////////////////////////////////////////////
-	cpgend ();
+	snprintf (_fn, sizeof(_fn), "%s.png", filename.c_str());
+	gr.WritePNG (_fn);
 }
 
 void cp::Read (const Header_t& h, const Trigger_t& t) {
-	// frequency axis
-	__arange (axfreq, (float_t)h.fch1, (float_t)h.foff*h.nchans / chanout, chanout);
+  fhigh = flow = h.fch1; 
+  flow += (h.foff * h.nchans);
 	chanin = h.nchans;
-	// tr - fb
-	tr_fb[0] = 0.0f;
-	tr_fb[3] = axfreq.front();
-	tr_fb[2] = h.tsamp;
-	tr_fb[4] = h.foff * h.nchans / chanout;
-	cmin  = 0;
-	cmax  = pow (2, h.nbits) - 1;
-	// tr - bt
-	tr_bt[0] = 0.0f;
-	tr_bt[2] = h.tsamp;
 	// parameters
 	sn = t.sn;
 	dm = t.dm;
@@ -149,6 +88,7 @@ void cp::Read (const Header_t& h, const Trigger_t& t) {
 	strcpy (group, h.group);
 	duration = std::ceil (t.i1 - t.i0);
 	nbits = h.nbits;
+	cmin = 0; cmax = pow(2, nbits) - 1;
 }
 
 void cp::ReadFB (const FloatVector_t& f, const Unsigned_t& _nsamps, const Unsigned_t& _offset) {
@@ -156,17 +96,25 @@ void cp::ReadFB (const FloatVector_t& f, const Unsigned_t& _nsamps, const Unsign
 	//static_assert (_offset == 0, "CandidatePlot::ReadFB offset != 0");
 	// nsamps
 	nsamps = _nsamps;
-	// reserve
-	__zfill (fb_tshape, nsamps);
-	__zfill (fb_fshape, chanout);
-	// nsamps
-	__zfill (fb, nsamps * chanout);
-	// time axis
-	__arange (axtime, 0.0f, (float_t)( tsamp ), nsamps);
+	overlap= _offset;
+	tleft = 0.0f;
+	tright = tleft + (nsamps*tsamp);
+	auto fb_size   = nsamps * chanout;
+	if (fb.size() != fb_size)
+    __zfill (fb, fb_size);
+  if (fb_tshape.size() != nsamps)
+    __zfill (fb_tshape, nsamps);
+  if (fb_fshape.size() != chanout)
+    __zfill (fb_fshape, chanout);
 	// fscrunch
 	Fscrunch (f, nsamps, chanout, fb);
 	// ABShape
 	ABShape (fb, nsamps, chanout, fb_tshape, fb_fshape);
+	// linking
+	_fb.Link (fb.data(), nsamps, chanout);
+	_fb.Transpose ();
+	_fb_tshape.Link (fb_tshape.data(), nsamps);
+	_fb_fshape.Link (fb_fshape.data(), chanout);
 #if 0
 {
     std::ofstream ofb ("tfb.dat");
@@ -184,17 +132,16 @@ void cp::ReadBT (const FloatVector_t& f,
 	//static_assert (_offset == 0, "CandidatePlot::ReadBT offset != 0");
 	// XXX It is called after ReadFB has been called
 	if (_nsamps != nsamps) {
-		std::cerr << "FilterbankBowtiePlot::ReadFB read different." << std::endl;
+		std::cerr << "CandidatePlot::ReadBT read different." << std::endl;
 		nsamps = std::min (nsamps, _nsamps);
 	}
-	// resize
-	__zfill (bt_fshape, axdm.size());
-	//__zfill (bt_tshape, nsamps);
+	if (_offset != overlap) {
+		std::cerr << "CandidatePlot::ReadBT overlap different." << std::endl;
+		overlap = std::min (overlap, _offset);
+	}
 	// copy 
 	bt = f;
-	// ABShape
-	//ABMaxShape (bt, axdm.size(), nsamps, bt_fshape, bt_tshape);
-	BMaxShape (bt, nsamps, axdm.size(), bt_fshape);
+  _bt.Link (bt.data(), nsamps, axdm.size());
 	// for IO
 #if 0
 {
