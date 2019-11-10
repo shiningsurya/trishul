@@ -13,8 +13,8 @@ INCLUDES+= -I$(BOOST_INC) -L$(BOOST_LIB)
 		$(CXX) $(CFLAGS) $(INCLUDES) $(JSONINC) -c $< -o $@
 
 ./ob/CandidateProfilePlot.o :  CandidateProfilePlot.cpp
-		$(CXX) $(CFLAGS) $(INCLUDES) -I$(PGPLOT_INC) -L$(PGPLOT_LIB) \
-		-L$(PGFORTRAN_LIB) -c $< -o $@
+		$(CXX) $(CFLAGS) $(INCLUDES)  \
+		-c $< -o $@
 
 ./ob/CandidatePlot.o :  CandidatePlot.cpp
 		$(CXX) $(CFLAGS) $(INCLUDES) -I$(DEDISP_INC) -I$(PGPLOT_INC) -L$(PGPLOT_LIB) \
@@ -73,7 +73,7 @@ testfbd : $(addprefix ./ob/, TestFilterbankDedisp.o FilterbankBowtiePlot.o Trish
 								PackUnpack.o \
 								Dedisp.o TrishulDedisperser.o )
 
-		$(LINK) $+ -L$(DEDISP_LIB)  -L$(BOOST_LIB) -Wl,-rpath=$(BOOST_LIB) $(PGPLOT_LD) $(DEDISP_LD) $(BOOST_LD) -o $@  
+		$(LINK) $+ -L$(DEDISP_LIB)  -L$(BOOST_LIB) -Wl,-rpath=$(BOOST_LIB) $(DEDISP_LD) $(BOOST_LD) $(LD_FLAGS) -o $@  
 
 testmglfb : $(addprefix ./ob/, TestMGL_FB.o \
 								Header.o Filterbank.o TrishulFormats.o \

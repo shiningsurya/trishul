@@ -30,37 +30,34 @@ int main () {
 	unsigned_t dm_count= 256;
 	dd.SetDM (dmlow, dmhigh, dm_count);
 	std::cout << "dm_list initialized" << std::endl;
-	Unsigned_t maxdelay = dd.MaxSampDelay ();
-	Unsigned_t ddnsamps = nsamps_gulp - maxdelay;
-	std::cout << "Maxd  :" << maxdelay << std::endl;
-	std::cout << "MaxdT :" << maxdelay*hh.tsamp << std::endl;
+	const Unsigned_t maxdelay = dd.MaxSampDelay ();
+	const Unsigned_t ddnsamps = nsamps_gulp - maxdelay;
+	std::cout << "Maxd    :" << maxdelay << std::endl;
+	std::cout << "MaxdT   :" << maxdelay*hh.tsamp << std::endl;
+	std::cout << "ddnsamps:" << ddnsamps << std::endl;
 	////////////////////// 
-	if ( maxdelay >= gulp_size ) 
+	if ( maxdelay >= gulp_size )  {
 	  throw TrishulError ("Gulp size too small for the dm range given!");
+	}
 	////////////////////// 
-	// plotting
-	FilterbankBowtiePlot fbp(0.65);
-	fbp.Read (hh, tt);
-	fbp.SetDM (dd.dm_list);
-	////////////////////// 
+	std::cout << "te.ddnsamps=" << ddnsamps << std::endl;
+	// overlapping
+	// overlap of > 1 doesn't make sense
+	const Unsigned_t overlap = 0.2 * nsamps_gulp + maxdelay;
+  const Unsigned_t overlap_size = overlap * hh.nchans * hh.nbits / 8;
 	// containers
-	FloatVector_t fbdata;   // Unpacked
-	ByteVector_t  ofbdata;  // Overlapped fb data
-	FloatVector_t btdata;   // Bowtie 
+	// Unpacked
+	FloatVector_t fbdata ( (nsamps_gulp+overlap)*hh.nchans );
+  // Overlapped fb data
+	ByteVector_t  ofbdata (gulp_size + overlap_size);
+  // Bowtie 
+	std::cout << "bdd.ddnsamps=" << ddnsamps << std::endl;
+	FloatVector_t btdata (dm_count * (ddnsamps + overlap));
 	////////////////////// 
 	// pipeline
 	Unsigned_t readbytes;
-	string_t tplotname ("/users/sbethapu/trishul_stuff/haha.png/png");
-	//string_t tplotname ("?");
-
-	Unsigned_t overlap = 0.2 * nsamps_gulp + maxdelay;
-	// overlap of > 1 doesn't make sense
-  Unsigned_t overlap_size = overlap * hh.nchans * hh.nbits / 8;
-  //////////////////////
-  // resizes
-	ofbdata.resize (gulp_size + overlap_size, 0);
-	fbdata.resize (hh.nchans * (nsamps_gulp + overlap), 3.0f);
-	btdata.resize (dm_count * (ddnsamps + overlap),0.0f);
+	string_t tplotname ("/users/sbethapu/trishul_stuff/mgl_fbd");
+	std::cout << "plotname=" << tplotname << std::endl;
 	//////////////////////////////////////////////////////
 	// First read
   readbytes = tf_f.ReadData (ofbdata, gulp_size);
@@ -75,6 +72,10 @@ int main () {
   // this is where I'd execute my pipeline 
   // if I had one!!!
   // for now plot
+	// plotting
+	FilterbankBowtiePlot fbp(0.65, 900, 600);
+	fbp.Read (hh, tt);
+	fbp.SetDM (dd.dm_list);
   fbp.ReadFB (fbdata, ddnsamps, 0L);
   fbp.ReadBT (btdata, ddnsamps, 0L);
   fbp.Plot (tplotname);
@@ -84,8 +85,7 @@ int main () {
   if (_i != ofbdata.begin() + overlap_size ) {
     std::cerr << "First overlap not matching!" << std::endl;
   }
-
-
+  
   // read for next iteration
   readbytes = tf_f.ReadData (ofbdata, gulp_size, overlap_size);
   while (readbytes == gulp_size) {

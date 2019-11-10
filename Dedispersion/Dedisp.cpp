@@ -52,7 +52,6 @@ void Dedisp::Execute (
   // so we play a trick here
   // we prefill out(FloatVector_t) to the required size
   // and pass data() to dedisp
-  Unsigned_t ddnsamps = nsamps - MaxSampDelay();
 
   // Let caller take care of sizes
   // out.resize ( ddnsamps * dm_list.size(), 0.0f );
@@ -76,7 +75,6 @@ void Dedisp::Execute (
   // so we play a trick here
   // we prefill out(FloatVector_t) to the required size
   // and pass data() to dedisp
-  Unsigned_t ddnsamps = nsamps - MaxSampDelay();
   // Let caller take care of sizes
   // out.resize ( ddnsamps * dm_list.size(), 0.0f );
   // executing

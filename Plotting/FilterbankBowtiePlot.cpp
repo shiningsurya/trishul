@@ -4,21 +4,12 @@
 #include <cstring>
 #include <cmath>
 
-// pgplot
-#include "cpgplot.h"
 
 using fbt = FilterbankBowtiePlot;
 
-constexpr std::array<float,5> fbt::heat_l;
-constexpr std::array<float,5> fbt::heat_r;
-constexpr std::array<float,5> fbt::heat_g;
-constexpr std::array<float,5> fbt::heat_b;
-
-fbt::~FilterbankBowtiePlot () { if (count) cpgend (); }
-
-fbt::FilterbankBowtiePlot (float_t charh_) : charh(charh_) {
-	std::fill (tr_fb, tr_fb + 6, 0.0f);
-	std::fill (tr_bt, tr_bt + 6, 0.0f);
+fbt::FilterbankBowtiePlot (float_t charh_, unsigned_t w, unsigned_t h) : 
+charh(charh_),
+gr (0, w, h) {
 	// __ranger factor
 	xxfac = 0.1f;	
 	// chanout
@@ -30,79 +21,41 @@ fbt::FilterbankBowtiePlot (float_t charh_) : charh(charh_) {
 }
 
 void fbt::Plot (const string_t& filename) {
-	if (count++) cpgpage ();
-	else {
-		cpgbeg (0,filename.c_str(),1,1); 
-		cpgsch (charh); 
-		cpgask (0);
-		cpgpap (0.0, 0.618);
-	}
+  // new frame
+  if (count) gr.NewFrame ();
+	// global properties
+  gr.SetScaleText (true);
+  gr.SubPlot (1,1,0, "");
 	////////////////////////////////////////////////////////////////
 	// DE-DEDISPERSED WATERFALL
-	cpgscf(1);
-	cpgsvp (0.1, 0.75, 0.1, 0.5);
-	cpgswin (
-			tleft, tright,
-			axfreq.front(), axfreq.back()
-	);
-	cpgbox ("BCN",0.0,0,"BCNV",0.0,0);
-	//cpglab ("Time (s)", "Freq (MHz)", "");
-	cpgctab (
-			heat_l.data(), heat_r.data(), 
-			heat_g.data(), heat_b.data(), 
-			heat_l.size(), constrast, brightness);
-	tr_fb[0] = tleft;
-	cpgimag (fb.data(), chanout, nsamps,
-			1, chanout, 1, nsamps,
-			cmin, cmax, tr_fb
-	);
-	cpgmtxt("B",2.5,.5,0.5,"Time (s)");
-	cpgmtxt("L",4,0.5,0.5,"Freq (MHz)");
-	// BANDSHAPE
-	cpgsci(1); // color index
-	cpgsvp(0.75, 0.90, 0.1, 0.5); // bandshape
-	__ranger (fb_fshape.cbegin(), fb_fshape.cend(), xxmin, xxmax);
-	cpgswin (xxmin, xxmax, axfreq.front(), axfreq.back());
-	cpgbox("BCN",0.0,0,"BCV",0.0,0);
-	cpgline(chanout, fb_fshape.data(), axfreq.data());
-	cpgmtxt("B",2.5,.5,0.5,"Intensity (a.u.)");
-	cpgmtxt("T",1.0,.5,0.5, "Bandshape");
+	gr.ColumnPlot (2,1);
+	gr.SetRanges (tleft, tright, fhigh, flow);
+	gr.Box(); gr.Axis();
+	gr.Dens (_fb);
+	gr.Label ('x', "Time (s)", 0);
+	gr.Label ('y', "Freq (MHz)", 0);
 	// BOWTIE
-	cpgsvp (0.1, 0.75, 0.5, 0.9);
-	cpgswin (
-			tleft, tright,
-			axdm.front(), axdm.back()
-	);
-	cpgbox ("BC",0.0,0,"BCNV",0.0,0);
-	cpgctab (
-			heat_l.data(), heat_r.data(), 
-			heat_g.data(), heat_b.data(), 
-			heat_l.size(), constrast, brightness);
-	tr_bt[0] = tleft;
-	__ranger (bt.begin(), bt.end(), xxmin, xxmax);
-	cpgimag (bt.data(), axdm.size(), nsamps,
-			1, axdm.size(), 1, nsamps, 
-			xxmin, xxmax, tr_bt
-	);
-	cpgmtxt("B",2.5,.5,0.5,"Time (s)");
-	cpgmtxt("L",4,0.5,0.5,"DM (pc cc)");
+	gr.Perspective(0.05);
+	gr.ColumnPlot (2,0, 0.2);
+	gr.Rotate (15,0);
+	gr.SetRanges (tleft, tright, axdm.front(), axdm.back());
+	gr.SetRange ('z', _bt);
+	gr.Surf(_bt, "BbcyrR");
+	gr.Perspective(0.0);
+	gr.Axis("y");
+	gr.Label ('y', "DM (pc/cc)", 0);
+	gr.SetTicks ('y', 20, 7, 10);
 	// TITLE
-	char txt[256];
-	cpgmtxt("T",1.0,0.0,0.0,group);
-	snprintf(txt, 256, "Antenna: ea%02d", stationid);
-	cpgmtxt("T",1.0,0.5, 0.5, txt);
-	snprintf(txt, 256, "Source: %s", name);
-	cpgmtxt("T",1.0, 0.9, 1.0, txt);
-	// DMAXSHAPE
-	cpgsci(1); // color index
-	cpgsvp(0.75, 0.90, 0.5, 0.9); // bandshape
-	__ranger (bt_fshape.cbegin(), bt_fshape.cend(), xxmin, xxmax);
-	cpgswin (xxmin, xxmax, axdm.front(), axdm.back());
-	cpgbox("BCM",0.0,0,"BCV",0.0,0);
-	cpgline(axdm.size(), bt_fshape.data(), axdm.data());
-	cpgmtxt("B",2.5,.5,0.5,"Max per DM"); 
+	gr.Puts (0.2, .9, group);
+	snprintf(_fn, sizeof(_fn), "Antenna: ea%02d", stationid);
+	gr.Puts (0.5, .9, _fn);
+	snprintf(_fn, sizeof(_fn), "Source: %s", name);
+	gr.Puts (0.8, 0.9, _fn);
 	////////////////////////////////////////////////////////////////
-	// cpgend deledated to dtor
+	snprintf (_fn, sizeof(_fn), "%s_%04d.png", filename.c_str(), count);
+	gr.WritePNG (_fn);
+	gr.EndFrame ();
+	count++;
 }
 
 void fbt::ReadFB (const FloatVector_t& f, const Unsigned_t& _nsamps, const Unsigned_t& _offset) {
@@ -116,15 +69,15 @@ void fbt::ReadFB (const FloatVector_t& f, const Unsigned_t& _nsamps, const Unsig
 	//tleft = tright - (_offset*tsamp);
 	//tright = tleft + (nsamps*tsamp);
 	// reserve
-	__zfill (fb_fshape, chanout);
 	// nsamps
 	auto fb_size   = nsamps * chanout;
 	if (fb.size() != fb_size)
     __zfill (fb, fb_size);
 	// fscrunch
 	Fscrunch (f, nsamps, chanout, fb);
-	// ABShape
-	BShape (fb, nsamps, chanout, fb_fshape);
+	// linking
+  _fb.Link (fb.data(), nsamps, chanout);
+  _fb.Transpose();
 }
 
 void fbt::ReadBT (const FloatVector_t& f, 
@@ -139,28 +92,15 @@ void fbt::ReadBT (const FloatVector_t& f,
 		std::cerr << "FilterbankBowtiePlot::ReadFB read different." << std::endl;
 		overlap = std::min (overlap, _offset);
 	}
-	// resize
-	__zfill (bt_fshape, axdm.size());
 	// copy 
 	bt = f;
-	// ABShape
-	BMaxShape (bt, nsamps, axdm.size(), bt_fshape);
+  _bt.Link (bt.data(), axdm.size(), nsamps);
 }
 
 void fbt::Read (const Header_t& h, const Trigger_t& t) {
-	// frequency axis
-	__arange (axfreq, (float_t)h.fch1, (float_t)h.foff*h.nchans / chanout, chanout);
+  fhigh = flow = h.fch1; 
+  flow += (h.foff * h.nchans);
 	chanin = h.nchans;
-	// tr - fb
-	tr_fb[0] = 0.0f;
-	tr_fb[3] = axfreq.front();
-	tr_fb[2] = h.tsamp;
-	tr_fb[4] = h.foff * h.nchans / chanout;
-	// tr - bt
-	tr_bt[0] = 0.0f;
-	tr_bt[2] = h.tsamp;
-	cmin  = 0;
-	cmax  = pow (2, h.nbits) - 1;
 	// parameters
 	tsamp = h.tsamp;
 	stationid = h.stationid;
