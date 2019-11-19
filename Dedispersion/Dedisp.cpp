@@ -20,6 +20,12 @@ float_t Dedisp::MaxTimeDelay () noexcept {
   return max_delay*tsamp; 
 }
 
+void Dedisp::SetDevice (unsigned_t id) {
+  error = dedisp_set_device (id);
+	if (error != DEDISP_NO_ERROR ) 
+		throw TrishulError("Unable to set device.");
+}
+
 void Dedisp::CreatePlan (
 		const double_t   _tsamp,
 		const unsigned_t _nchans, 

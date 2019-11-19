@@ -12,3 +12,7 @@ string_t change_extension (
 // escape strings
 string_t escape_string (const char * in, unsigned_t len);
 string_t escape_string (const string_t& in);
+
+// change path and extension
+string_t change_dir (
+  const string_t& in, const string_t& odir);

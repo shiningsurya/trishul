@@ -84,5 +84,13 @@ testmglfb : $(addprefix ./ob/, TestMGL_FB.o \
 clean:
 		rm -f ./ob/*.o
 
+all : tscandplot
+
+tscandplot : $(addprefix ./ob/, tscandplot.o CandidatePlot.o TrishulPlotting.o \
+								Header.o BSON.o TrishulFormats.o \
+								PackUnpack.o Incoherent.o Timer.o Globals.o\
+								TrishulDedisperser.o Dedisp.o)
+
+		$(LINK) $+ -L$(BOOST_LIB) -L$(DEDISP_LIB) -Wl,-rpath=$(BOOST_LIB) $(LD_FLAGS) $(DEDISP_LD) $(BOOST_LD) -o $@  
 .PHONY:
 		clean

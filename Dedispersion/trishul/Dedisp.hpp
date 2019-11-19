@@ -25,4 +25,5 @@ class Dedisp : public TrishulDedisperser {
 		Unsigned_t MaxSampDelay () noexcept;
 		float_t    MaxTimeDelay () noexcept;
 
+		void SetDevice (unsigned_t x);
 };
