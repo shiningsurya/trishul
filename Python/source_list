@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# $1 is candidate dumps
+
+## This takes out group, ra/dec in radians and last time
+for f in "$@"; do
+  awk -v bname="$(basename $f)" '{if(NF==2){g=substr(bname,0,16);r=$1;d=$2} else{tmax=$3}} END {print g,r,d,tmax}' $f
+done
