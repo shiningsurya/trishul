@@ -49,3 +49,7 @@ Makefile.inc
 
 # dat
 *.dat
+
+#python
+__pycache__
+*.pyc

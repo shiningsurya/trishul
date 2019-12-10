@@ -7,6 +7,8 @@ import numpy as np
 import ubjson
 import sys
 
+__all__ = ['FBSON']
+
 def Read(fname):
     """
     Given a filename or list of filenames, returns the Python dict.
@@ -31,7 +33,7 @@ def Read(fname):
                 print ( "Error with file ", ff )
     return ret
 
-def __unpack(ix, nsamps, nchans, nbits):
+def unpack(ix, nsamps, nchans, nbits):
     '''
     Takes in JSON/UBSON read array and creates an Numpy float array
     Arguments
@@ -113,7 +115,7 @@ class FBSON(object):
     ----------
     all the shebang
     '''
-    def __init__(self, filename, _lazy = True):
+    def __init__(self, filename, loadFB = False):
         '''
         Takes filename
         '''
@@ -126,11 +128,11 @@ class FBSON(object):
             for k,v in x[sd].items():
                 self.__dict__[k] = v
         #
-        self.nsamps = len(x['fb']) / self.nchans /self.nbits * 8
-        self.lazy = _lazy
+        self.nsamps = int (len(x['fb']) / self.nchans /self.nbits * 8)
+        self.fb_loaded = loadFB
         self.fb = None
-        if not self.lazy:
-            self.fb = Unpack(x['fb'], self.nsamps, self.nchans, self.nbits)
+        if self.fb_loaded:
+            self.fb = unpack(x['fb'], self.nsamps, self.nchans, self.nbits)
 
     def Unpack(self):
         '''
@@ -139,7 +141,7 @@ class FBSON(object):
         Loads the entire dump filterbank into memory.
         '''
         if self.fb is None:
-            self.fb = __unpack(x['fb'], self.nsamps, self.nchans, self.nbits)
+            self.fb = unpack(x['fb'], self.nsamps, self.nchans, self.nbits)
 
     def __str__(self):
         if self.fb is None:
