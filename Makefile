@@ -20,6 +20,10 @@ INCLUDES+= -I$(BOOST_INC) -L$(BOOST_LIB)
 		$(CXX) $(CFLAGS) $(INCLUDES) -I$(DEDISP_INC) -I$(PGPLOT_INC) -L$(PGPLOT_LIB) \
 		-L$(PGFORTRAN_LIB) -c $< -o $@
 
+./ob/BowtiePlot.o :  BowtiePlot.cpp
+		$(CXX) $(CFLAGS) $(INCLUDES) -I$(DEDISP_INC) -I$(PGPLOT_INC) -L$(PGPLOT_LIB) \
+		-L$(PGFORTRAN_LIB) -c $< -o $@
+
 ./ob/TestCandidatePlot.o : TestCandidatePlot.cpp
 		$(CXX) $(CFLAGS) $(INCLUDES)   $(JSONINC) -c $< -o $@
 
@@ -87,6 +91,13 @@ clean:
 all : tscandplot
 
 tscandplot : $(addprefix ./ob/, tscandplot.o CandidatePlot.o TrishulPlotting.o \
+								Header.o BSON.o TrishulFormats.o \
+								PackUnpack.o Incoherent.o Timer.o Globals.o\
+								TrishulDedisperser.o Dedisp.o)
+
+		$(LINK) $+ -L$(BOOST_LIB) -L$(DEDISP_LIB) -Wl,-rpath=$(BOOST_LIB) $(LD_FLAGS) $(DEDISP_LD) $(BOOST_LD) -o $@  
+
+tsbtplot : $(addprefix ./ob/, tsbtplot.o BowtiePlot.o TrishulPlotting.o \
 								Header.o BSON.o TrishulFormats.o \
 								PackUnpack.o Incoherent.o Timer.o Globals.o\
 								TrishulDedisperser.o Dedisp.o)
