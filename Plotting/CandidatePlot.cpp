@@ -47,11 +47,21 @@ void cp::Plot (const string_t& filename) {
 	gr.SetTicks ('y', 20, 7, axdm.front()+5);
 	// Profile
   gr.SubPlot (2,1,1, "");
-  gr.ColumnPlot (2,0);
+  gr.ColumnPlot (2,0, 0.2);
   gr.SetRange ('x', tleft, tright);
   gr.SetRange ('y', _fb_tshape);
-  gr.Plot (_fb_tshape);
+  gr.Plot (_fb_tshape, "b");
 	gr.Axis("x");
+	gr.Label ('x', "Time (s)", 0);
+	// DM S/N
+  gr.ColumnPlot (2,1, 0.2);
+  gr.SetRange ('x', axdm.front(), axdm.back());
+  gr.SetRange ('y', _tsndm);
+  gr.Plot (_tsndm, "r");
+	gr.Label ('x', "DM (pc/cc)", 0);
+	//gr.Label ('y', "S/N (a.u.)", 0);
+	gr.Axis("x");
+	gr.SetTicks ('x', 20, 7, axdm.front()+5);
 	// text
 	float_t xx = 0.8, yy=1.0, off=0.04;
 	snprintf(_fn, sizeof(_fn), "S/N: %3.2f", sn);
@@ -63,6 +73,8 @@ void cp::Plot (const string_t& filename) {
 	snprintf(_fn, sizeof(_fn), "Antenna: ea%02d", stationid);
 	gr.Puts (xx, yy, _fn,":aC", 2.8); yy -= off;
 	snprintf(_fn, sizeof(_fn), "Source: %s", name);
+	gr.Puts (xx, yy, _fn,":aC", 2.8); yy -= off;
+	snprintf(_fn, sizeof(_fn), "PeakTime: %4.2fs", peak_time);
 	gr.Puts (xx, yy, _fn,":aC", 2.8); yy -= off;
 	snprintf(_fn, sizeof(_fn), "%s", 
     escape_string(group, sizeof(group)).c_str());
@@ -142,6 +154,12 @@ void cp::ReadBT (const FloatVector_t& f,
 	// copy 
 	bt = f;
   _bt.Link (bt.data(), nsamps, axdm.size());
+  // tsndm
+  __zfill (tsndm, axdm.size());
+  Unsigned_t pt = peak_time / tsamp;
+  for (unsigned_t i = 0; i < axdm.size();i++)
+    tsndm[i] = bt[i*nsamps + pt];
+  _tsndm.Link (tsndm.data(), axdm.size());
 	// for IO
 #if 0
 {

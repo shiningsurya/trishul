@@ -5,10 +5,8 @@
 // mathgl
 #include <mgl2/mgl.h>
 
-class CandidatePlot : protected TrishulPlotting {
-	private:
+class BowtiePlot : protected TrishulPlotting {
 		// viewports
-		float_t      charh;
 		char         _fn[256];
 		mglGraph     gr;
 		// images
@@ -34,28 +32,21 @@ class CandidatePlot : protected TrishulPlotting {
 		float_t      xxmax;
 		float_t      dd_range;
 		// plot
-		FloatVector_t   fb_tshape;
-		mglData         _fb_tshape;
-		FloatVector_t   fb_fshape;
-		mglData         _fb_fshape;
-		FloatVector_t   fb;
-		mglData         _fb;
 		FloatVector_t   bt;
 		mglData         _bt;
-		FloatVector_t   tsndm;
-		mglData         _tsndm;
 		float_t         tleft;
 		float_t         tright;
 		FloatVector_t   axdm;
 		float_t         flow;
 		float_t         fhigh;
-
-	public:
-		CandidatePlot (float_t _charh = 0.65, unsigned_t _w= 1200, unsigned_t _h= 900);
-		~CandidatePlot () = default;
+  public:
+    BowtiePlot (unsigned_t _w = 1200, unsigned_t _h = 900);
+    ~BowtiePlot () = default;
 
 		void Read (const Header_t& h, const Trigger_t& t) override;
-		void ReadFB (const FloatVector_t& f, const Unsigned_t& nsamps, const Unsigned_t& offset = 0) override;
+		void ReadFB (const FloatVector_t& f, const Unsigned_t& nsamps, const Unsigned_t& offset = 0) {
+		  throw TrishulError ("This ain't gonna work.");
+		}
 		void ReadBT (const FloatVector_t& f, const Unsigned_t& nsamps, const Unsigned_t& offset = 0) override;
 
 		void SetDM (const FloatVector_t& dms) { 

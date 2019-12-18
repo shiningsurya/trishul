@@ -79,9 +79,21 @@ bool BSON::ReadHeader (Header_t& h, Trigger_t& t) {
 	h.fch1      = j["frequency"]["fch1"];
 	h.foff      = j["frequency"]["foff"];
 	h.nchans    = j["frequency"]["nchans"];
+
 	// header parameters
-	h.nbits     = j["parameters"]["nbits"];
-	h.stationid = j["parameters"]["antenna"];
+	//h.nbits     = j["parameters"]["nbits"];
+	//h.stationid = j["parameters"]["antenna"];
+	//h.ra        = j["parameters"]["ra"];
+	//h.dec       = j["parameters"]["dec"];
+	//This roundabout way because ra/dec was 
+	//introduced in a later version
+	auto jp = j["parameters"];
+	for (const auto& ijp : jp.items()) {
+	  if (ijp.key() == "nbits") h.nbits = ijp.value();
+	  else if (ijp.key() == "antenna") h.stationid = ijp.value();
+	  else if (ijp.key() == "ra") h.ra = ijp.value();
+	  else if (ijp.key() == "dec") h.dec = ijp.value();
+	}
 	// some book-keeping 
 	//duration = j["time"]["duration"];
 	t.peak_time = j["time"]["peak_time"];
@@ -117,7 +129,8 @@ bool BSON::WriteHeader (const Header_t& head, const Trigger_t& trig)  {
 	j["parameters"]["nbits"] = head.nbits;
 	j["parameters"]["antenna"] = head.stationid;
 	j["parameters"]["source_name"] = head.name;
-
+	j["parameters"]["ra"] = head.ra;
+	j["parameters"]["dec"] = head.dec;
 	// some book-keeping 
 	double_t sec_from_start = trig.i0 - head.epoch;
 	j["time"]["tstart"] = head.tstart + (sec_from_start/86400.0f);
