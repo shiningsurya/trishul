@@ -36,4 +36,6 @@ class FDMT_CPU : public TrishulDedisperser {
 		void Execute (const ByteVector_t&,  Unsigned_t, ByteVector_t& ) override {
 			throw TrishulError ("Not available for FDMT_CPU.");
 		}
+
+		Unsigned_t MaxSampDelay () noexcept;
 };

@@ -22,6 +22,11 @@ void fc::CreatePlan (
 	fmin     = fmax + (nchans*freq_off);
 }
 
+Unsigned_t fc::MaxSampDelay () noexcept {
+	bDT   =  4148.741601 * dff (fmax, fmin) * dm_list.back  () / tsamp;
+	return bDT;
+}
+
 void fc::Execute (
   const FloatVector_t& in,
   Unsigned_t _nsamps,
