@@ -53,3 +53,9 @@ Makefile.inc
 #python
 __pycache__
 *.pyc
+
+# image
+image_detection
+
+#fdmt
+fdmt_funs
