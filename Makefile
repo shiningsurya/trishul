@@ -100,7 +100,7 @@ tscandplot : $(addprefix ./ob/, tscandplot.o CandidatePlot.o TrishulPlotting.o \
 tsbtplot : $(addprefix ./ob/, tsbtplot.o BowtiePlot.o TrishulPlotting.o \
 								Header.o BSON.o TrishulFormats.o \
 								PackUnpack.o Timer.o Globals.o\
-								TrishulDedisperser.o FDMT_CPU.o)
+								TrishulDedisperser.o BTIncoherent.o Incoherent.o)
 
 		$(LINK) $+ -L$(BOOST_LIB)  -Wl,-rpath=$(BOOST_LIB) $(LD_FLAGS)  $(BOOST_LD) -o $@  
 .PHONY:
