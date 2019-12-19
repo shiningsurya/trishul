@@ -22,7 +22,7 @@ int main(int ac, char* av[]) {
     return 0;
   }
   string_t file(av[1]);
-  string_t ofile = change_dir (file, P2);
+  string_t ofile = change_dir (file, P1);
   string_t filename = change_extension (ofile, "");
 #ifdef TIMING
   Timer tfdmt ("FDMT");
@@ -56,13 +56,13 @@ int main(int ac, char* av[]) {
 	float_t dmhigh = tt.dm + (0.5 * dwidth);
 	dd.SetDM (dmlow, dmhigh, dm_count);
 	Unsigned_t maxdelay = dd.MaxSampDelay ();
+	if ( maxdelay >= nsamps) 
+	  throw TrishulError ("Nsamps too small for the dm range given!");
 	Unsigned_t ddnsamps = nsamps - maxdelay;
 	FloatVector_t tdata;
 #ifdef TIMING
   tfdmt.Start ();
 #endif 
-	if ( maxdelay >= nsamps) 
-	  throw TrishulError ("Nsamps too small for the dm range given!");
 	dd.Execute (data, nsamps, tdata);
 #ifdef TIMING
   tfdmt.StopPrint (std::cout);

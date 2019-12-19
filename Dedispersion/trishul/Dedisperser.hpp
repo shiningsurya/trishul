@@ -2,6 +2,10 @@
 #include "trishul.hpp"
 
 class TrishulDedisperser {
+  private:
+    static inline float_t _single_dm_delay (float_t dm, float_t f0, float_t f1) {
+      return 4148.741601 * (1.0/f0/f0 - 1.0/f1/f1) * dm;
+    }
 	protected:
 		// parameters
 		double_t           tsamp;
@@ -26,13 +30,21 @@ class TrishulDedisperser {
 		float_t MaxDM (Unsigned_t nsamps);
 
 		void SetDM (const float_t a, const float_t b, const unsigned_t n) noexcept { 
+		  // freqs
+		  float_t fmax = freq_ch1;
+		  float_t fmin = fmax;
+		  if (freq_off < 0.0f) fmin += nchans*freq_off;
+		  else fmin -= nchans*freq_off;
+		  // dms
 			float_t start = a;
 			float_t step = (b - a) / n;
 			// 
-			dm_list.push_back (start);
-			for (unsigned_t i = 1; i < n; i++,start+=step) dm_list.push_back (start);
+			for (unsigned_t i = 0; i < n; i++,start+=step) {
+			  dm_list.push_back (start);
+			  idelays.push_back ( _single_dm_delay (start, fmin, fmax) /tsamp);
+			}
 			//
-			_is_dmlist_ready = false;
+			_is_dmlist_ready = true;
 		}
 
 		void SetDM (const FloatVector_t& fv) noexcept {

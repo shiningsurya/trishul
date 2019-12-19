@@ -9,6 +9,9 @@ class FDMT_CPU : public TrishulDedisperser {
 		// Main state	
 		Unsigned_t      nsamps;
 		FloatVector_t   State;
+		// strides for state
+		Unsigned_t      salpha;
+		Unsigned_t      sbeta;
 		// DM ranges
 		Unsigned_t      aDT;
 		Unsigned_t      bDT;
