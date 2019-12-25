@@ -19,7 +19,7 @@ void fc::CreatePlan (
 	freq_off = _freq_off;
 	// 
 	fmax     = _freq_ch1;
-	fmin     = fmax + (nchans*freq_off);
+	fmin     = fmax - (nchans*freq_off);
 }
 
 Unsigned_t fc::MaxSampDelay () noexcept {

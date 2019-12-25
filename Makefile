@@ -97,10 +97,10 @@ tscandplot : $(addprefix ./ob/, tscandplot.o CandidatePlot.o TrishulPlotting.o \
 
 		$(LINK) $+ -L$(BOOST_LIB) -L$(DEDISP_LIB) -Wl,-rpath=$(BOOST_LIB) $(LD_FLAGS) $(DEDISP_LD) $(BOOST_LD) -o $@  
 
-tsbtplot : $(addprefix ./ob/, tsbtplot.o BowtiePlot.o TrishulPlotting.o \
+tsbtplot : $(addprefix ./ob/, tsbtplot.o TrishulPlotting.o \
 								Header.o BSON.o TrishulFormats.o \
-								PackUnpack.o Incoherent.o Timer.o Globals.o\
-								TrishulDedisperser.o Dedisp.o)
+								PackUnpack.o FDMT_CPU.o Timer.o Globals.o\
+								TrishulDedisperser.o )
 
 		$(LINK) $+ -L$(BOOST_LIB) -L$(DEDISP_LIB) -Wl,-rpath=$(BOOST_LIB) $(LD_FLAGS) $(DEDISP_LD) $(BOOST_LD) -o $@  
 .PHONY:

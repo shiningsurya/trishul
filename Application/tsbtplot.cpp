@@ -1,6 +1,5 @@
 #include "trishul.hpp"
 #include "trishul/Header.hpp"
-#include "trishul/BowtiePlot.hpp"
 #include "trishul/BSON.hpp"
 #include "trishul/PackUnpack.hpp"
 #include "trishul/FDMT_CPU.hpp"
@@ -15,6 +14,10 @@
 #define P1 "/users/sbethapu/trishul_stuff/btplots/"
 #define P2 "/tmp/"
 #define BT
+
+#ifdef BT
+#include "trishul/BowtiePlot.hpp"
+#endif
 
 int main(int ac, char* av[]) {
   if (ac != 2) {
