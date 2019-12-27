@@ -2,7 +2,7 @@
 #include "trishul/Header.hpp"
 #include "trishul/BSON.hpp"
 #include "trishul/PackUnpack.hpp"
-#include "trishul/BTIncoherent.hpp"
+#include "trishul/FDMT_CPU.hpp"
 
 #include "trishul/Globals.hpp"
 
@@ -15,7 +15,7 @@
 #define P2 "/tmp/"
 #define BT
 
-#ifdef BT
+#ifndef BT
 #include "trishul/BowtiePlot.hpp"
 #endif
 
@@ -53,12 +53,13 @@ int main(int ac, char* av[]) {
 	// dedisp
 	float_t dwidth = 50;
 	unsigned_t dm_count= 256;
-	BTIncoherent dd;
+	FDMT_CPU dd;
 	dd.CreatePlan (hh.tsamp, hh.nchans, hh.fch1, hh.foff);
 	float_t dmlow = tt.dm - (0.5 * dwidth); 
 	float_t dmhigh = tt.dm + (0.5 * dwidth);
 	dd.SetDM (dmlow, dmhigh, dm_count);
 	Unsigned_t maxdelay = dd.MaxSampDelay ();
+	std::cout << "maxdelay=" << maxdelay << std::endl;
 	if ( maxdelay >= nsamps) 
 	  throw TrishulError ("Nsamps too small for the dm range given!");
 	Unsigned_t ddnsamps = nsamps - maxdelay;
