@@ -100,7 +100,8 @@ void fc::Iteration (const unsigned_t& i) {
 void fc::Initialization (const FloatVector_t& Image) {
 	aDT   =  4148.741601 * dff (fmin, fmax) * dm_list.front () / tsamp;
 	bDT   =  4148.741601 * dff (fmin, fmax) * dm_list.back  () / tsamp;
-	maxDT = std::max(bDT, static_cast<Unsigned_t>(nsamps));
+	maxDT = std::min(bDT, static_cast<Unsigned_t>(nsamps));
+	std::cout << "maxDT = " << maxDT << std::endl;
 	Unsigned_t deltaT = std::ceil ( (maxDT-1)*cff(fmin, fmin+freq_off, fmax) );
 
 	FloatVector_t Output (Image.size() * (deltaT+1));
@@ -114,7 +115,7 @@ void fc::Initialization (const FloatVector_t& Image) {
 		//Output.at (isamp, ichan, idt) = Output.at (isamp, ichan, idt-1) + Image.at  (nsamps-isamp+1, ichan);
 		Output [idt   +alpha*ichan +beta*isamp] =
 		Output [idt-1 +alpha*ichan +beta*isamp] +
-		Image  [ichan +nsamps*(nsamps-isamp+1)];
+		Image  [ichan +nchans*(nsamps-isamp)];
 
 	State  = std::move (Output);
 	salpha = alpha;

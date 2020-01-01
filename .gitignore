@@ -50,6 +50,7 @@ Makefile.inc
 
 # dat
 *.dat
+*.npy
 
 #python
 __pycache__
