@@ -4,7 +4,6 @@
 
 class BTIncoherent : public TrishulDedisperser {
   private:
-    Incoherent incoh;
 	public:
 	  BTIncoherent ()  = default;
 	  ~BTIncoherent () = default;

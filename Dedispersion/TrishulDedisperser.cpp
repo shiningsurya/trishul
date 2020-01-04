@@ -3,6 +3,7 @@
 using td = TrishulDedisperser;
 
 void td::Delays (float_t _dm) {
+  // clear all other delays
   idelays.clear ();
 	single_dm = _dm;
 	float_t if02 = 1.0f/freq_ch1/freq_ch1;

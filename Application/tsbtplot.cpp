@@ -46,7 +46,10 @@ int main(int ac, char* av[]) {
 	// Unpack
 	Unsigned_t fsize = nsamps * hh.nchans;
 	FloatVector_t data (fsize);
-	Unpack2Bit (bdata, data);
+	if (hh.nbits == 2)
+    Unpack2Bit (bdata, data);
+  else if (hh.nbits == 8)
+    Unpack8Bit (bdata, data);
 	// dedisp
 	float_t dwidth = 50;
 	unsigned_t dm_count= 256;

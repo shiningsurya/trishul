@@ -102,8 +102,10 @@ bool BSON::ReadHeader (Header_t& h, Trigger_t& t) {
 	// whenever this happens, which shouldn't happen, 
 	// peak_time is adjusted and sufficient logging to cerr is done
 	t.peak_time = j["time"]["peak_time"];
-	if (t.peak_time < 0) 
+	if (t.peak_time < 0) {
 	  t.peak_time = TrishulDedisperser::_single_dm_delay (t.dm, h.fch1, h.foff, h.nchans);
+    std::cerr << "[!!] Trishul::Formats::BSON invalid peak-time received with filename=" << filename << std::endl;
+	}
 	// peak_time is set to dm-delay for the entire band
 	
 	h.tstart    = j["time"]["tstart"];
