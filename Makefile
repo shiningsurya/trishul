@@ -114,5 +114,13 @@ tsquery : $(addprefix ./ob/, tsquery.o  \
 								Header.o BSON.o TrishulFormats.o )
 
 		$(LINK) $+ -L$(BOOST_LIB)  -Wl,-rpath=$(BOOST_LIB) $(LD_FLAGS)  $(BOOST_LD) -o $@  
+
+tsfeature_lyon: $(addprefix ./ob/, tsfeature_lyon.o Moments.o\
+								Header.o BSON.o TrishulFormats.o \
+								PackUnpack.o Timer.o TrishulDedisperser.o BTIncoherent.o \
+								Incoherent.o Learnings.o )
+
+		$(LINK) $+ -L$(BOOST_LIB) -Wl,-rpath=$(BOOST_LIB) $(BOOST_LD) -o $@  
+
 .PHONY:
 		clean

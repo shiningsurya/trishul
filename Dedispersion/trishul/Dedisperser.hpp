@@ -2,7 +2,12 @@
 #include "trishul.hpp"
 
 class TrishulDedisperser {
-  private:
+  public:
+    static inline float_t _single_dm_delay (float_t dm, float_t f0, float_t foff, unsigned_t nchans) {
+      foff = foff >= 0 ? foff : -foff;
+      float_t f1 = f0 - (nchans*foff);
+      return 4148.741601 * (1.0/f0/f0 - 1.0/f1/f1) * dm;
+    }
     static inline float_t _single_dm_delay (float_t dm, float_t f0, float_t f1) {
       return 4148.741601 * (1.0/f0/f0 - 1.0/f1/f1) * dm;
     }

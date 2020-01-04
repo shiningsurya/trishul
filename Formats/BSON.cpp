@@ -1,6 +1,7 @@
 #include "trishul.hpp"
 #include "trishul/BSON.hpp"
 
+#include "trishul/Dedisperser.hpp"
 
 bool BSON::ReadFromFile (const string_t& filename) {
 	std::ifstream ifs (filename, std::ios::binary);
@@ -94,7 +95,17 @@ bool BSON::ReadHeader (Header_t& h, Trigger_t& t) {
 	}
 	// some book-keeping 
 	//duration = j["time"]["duration"];
+	 
+	// For some odd weird reason, peak_time comes out as negative
+	// i0 is negative 
+	// agtriggerhook made err
+	// whenever this happens, which shouldn't happen, 
+	// peak_time is adjusted and sufficient logging to cerr is done
 	t.peak_time = j["time"]["peak_time"];
+	if (t.peak_time < 0) 
+	  t.peak_time = TrishulDedisperser::_single_dm_delay (t.dm, h.fch1, h.foff, h.nchans);
+	// peak_time is set to dm-delay for the entire band
+	
 	h.tstart    = j["time"]["tstart"];
 	// string_t to char*
 	string_t x  = j["parameters"]["source_name"];

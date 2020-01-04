@@ -17,6 +17,6 @@ class BTIncoherent : public TrishulDedisperser {
 		}
 
 		Unsigned_t MaxSampDelay () noexcept {
-		  return dm_list.back();
+		  return idelays.back();
 		}
 };
