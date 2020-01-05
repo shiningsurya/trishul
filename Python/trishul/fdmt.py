@@ -8,9 +8,8 @@ Entire credit to Zackay & Ofek (2014)
 """
 
 import numpy as np
-import trishul.dedisp as trd
 
-__all__ = ['fdmt']
+__all__ = []
 
 def FDMT_initialization(Image, f_min, f_max, maxDT, dataType):
     """
@@ -173,7 +172,12 @@ def fdmt (x, dm=None, maxdt=None):
     freqs = trd.FreqTable (x.nchans, x.fch1, x.foff)
     fmin,fmax = freqs[-1], freqs[0]
     maxd  = trd.Delays (dm[-1], freqs)
-    maxdt = 4096
-    return FDMT (x.fb, fmin, fmax, maxdt, x.fb.dtype)
+    maxdt = maxdt or maxd[-1]
+    fb = np.zeros_like (x.fb)
+    nchans,_ = fb.shape
+    for ichan in range (nchans):
+        fb[-ichan] = x.fb[ichan]
+    return FDMT (fb, fmin, fmax, maxdt, x.fb.dtype)
+
 
 
