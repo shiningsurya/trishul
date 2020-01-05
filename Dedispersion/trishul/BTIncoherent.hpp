@@ -4,7 +4,6 @@
 
 class BTIncoherent : public TrishulDedisperser {
   private:
-    Incoherent incoh;
 	public:
 	  BTIncoherent ()  = default;
 	  ~BTIncoherent () = default;
@@ -17,6 +16,6 @@ class BTIncoherent : public TrishulDedisperser {
 		}
 
 		Unsigned_t MaxSampDelay () noexcept {
-		  return dm_list.back();
+		  return idelays.back();
 		}
 };

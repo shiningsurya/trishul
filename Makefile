@@ -2,7 +2,7 @@
 # For trishul
 include Makefile.inc
 
-VPATH=./:./Dedispersion:./Plotting:./Formats:./Application:./ob
+VPATH=./:./Dedispersion:./Plotting:./Formats:./Application:./Learnings:./ob
 
 INCLUDES+= -I$(BOOST_INC) -L$(BOOST_LIB)
 
@@ -85,6 +85,12 @@ testmglfb : $(addprefix ./ob/, TestMGL_FB.o \
 								Incoherent.o TrishulDedisperser.o )
 
 		$(LINK) $+ -L$(BOOST_LIB) -Wl,-rpath=$(BOOST_LIB) $(PGPLOT_LD) $(BOOST_LD) -o $@  
+
+testlearn : $(addprefix ./ob/, TestLearnings.o Moments.o\
+								Learnings.o )
+
+		$(LINK) $+ -L$(BOOST_LIB) -Wl,-rpath=$(BOOST_LIB) $(BOOST_LD) -o $@  
+
 clean:
 		rm -f ./ob/*.o
 
@@ -103,5 +109,18 @@ tsbtplot : $(addprefix ./ob/, tsbtplot.o \
 								TrishulDedisperser.o FDMT_CPU.o Incoherent.o)
 
 		$(LINK) $+ -L$(BOOST_LIB)  -Wl,-rpath=$(BOOST_LIB) $(LD_FLAGS)  $(BOOST_LD) -o $@  
+
+tsquery : $(addprefix ./ob/, tsquery.o  \
+								Header.o BSON.o TrishulFormats.o )
+
+		$(LINK) $+ -L$(BOOST_LIB)  -Wl,-rpath=$(BOOST_LIB) $(LD_FLAGS)  $(BOOST_LD) -o $@  
+
+tsfeature_lyon: $(addprefix ./ob/, tsfeature_lyon.o Moments.o\
+								Header.o BSON.o TrishulFormats.o \
+								PackUnpack.o Timer.o TrishulDedisperser.o BTIncoherent.o \
+								Incoherent.o Learnings.o )
+
+		$(LINK) $+ -L$(BOOST_LIB) -Wl,-rpath=$(BOOST_LIB) $(BOOST_LD) -o $@  
+
 .PHONY:
 		clean

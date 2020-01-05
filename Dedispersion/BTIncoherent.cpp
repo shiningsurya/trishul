@@ -15,8 +15,6 @@ void bti::CreatePlan (
 	// freq_off is positive
 	freq_off = -_freq_off;
 	freq_ch1 = _freq_ch1;
-	// incoh
-	incoh.CreatePlan (tsamp, nchans, freq_ch1, freq_off);
 }
 
 void bti::Execute (
@@ -24,21 +22,21 @@ void bti::Execute (
   Unsigned_t _nsamps,
   FloatVector_t& out) {
 
+  // this idelays correspond to dm_list
+  // idelays.size () == dm_count
   Unsigned_t ddnsamps = _nsamps - idelays.back();
   unsigned_t dm_count = dm_list.size();
   out.resize (dm_count*ddnsamps, 0.0f);
 
+  // for every dm
   for (unsigned_t idm = 0; idm < dm_count; idm++) {
-    FloatVector_t iout;
-    Unsigned_t    idd;
-    // de-dispersion
-    incoh.Delays  (dm_list[idm]);
-    idd = _nsamps - incoh.MaxSampDelay ();
-    incoh.Execute (in, idd, iout);
-    // freq averaging
-    // outputing
-    for (unsigned_t isamp = 0; isamp < ddnsamps; isamp++)
-    for (unsigned_t ichan = 0; ichan < nchans  ; ichan++)
-      out[isamp +ddnsamps*idm] += iout[ichan +nchans*isamp]/nchans;
+    // this changes idelays
+    Delays (dm_list[idm]);
+    for (unsigned_t ichan = 0; ichan < nchans; ichan++) {
+      Unsigned_t idd = idelays[ichan];
+      for (Unsigned_t isamp = 0; isamp < ddnsamps; isamp++) {
+        out[isamp +ddnsamps*idm] += in[ichan +nchans*isamp +nchans*idd];
+      } // for every sample
+    } // for every channel
   } // for every dm
 }
