@@ -119,6 +119,7 @@ class FBSON(object):
         '''
         Takes filename
         '''
+        self.filename = filename
         x = Read(filename)
         for k,v in x.items():
             if k in ["sn", "dm", "width"]:
@@ -141,6 +142,7 @@ class FBSON(object):
         Loads the entire dump filterbank into memory.
         '''
         if self.fb is None:
+            x = Read (self.filename)
             self.fb = unpack(x['fb'], self.nsamps, self.nchans, self.nbits)
 
     def __str__(self):

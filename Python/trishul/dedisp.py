@@ -90,22 +90,6 @@ def DedispFBSON (x):
 def BowTie (x, idelays):
     if x.fb is None:
         raise ValueError ("FBSON filterbank is not loaded.")
-    # freqs
-    fmax = x.fch1
-    fmin = fmax + (x.nchans*x.foff)
-    maxdt = idelays.max()
-    # flip frequency axis
-    onchans,onsamps = x.fb.shape
-    fb = np.zeros ((onchans,onsamps+maxdt), dtype=x.fb.dtype)
-    fb[:,-onsamps:] = x.fb
-    # FDMT call
-    # XXX +1 required for inclusive effort
-    fbt = FDMT (np.flipud(fb), fmin, fmax, maxdt+1, fb.dtype)
-    # dmrange selection
-    ddnsamps = onsamps - maxdt
-    bt = np.zeros ((idelays.size, ddnsamps))
-    for i,dm in enumerate (idelays):
-        bt[i] = fbt[dm,-ddnsamps:]
-    # 
-    return fbt
+    fff = FDMT (x.fch1, x.foff, x.nchans)
+    return fff.Bowtie (x.fb, idelays)
 
