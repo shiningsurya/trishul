@@ -4,7 +4,7 @@
 #include "trishul/BSON.hpp"
 #include "trishul/PackUnpack.hpp"
 // BowTie help
-#include "trishul/BTIncoherent.hpp"
+#include "trishul/FDMT_CPU.hpp"
 #define TIMING
 #ifdef TIMING
 #include "trishul/Timer.hpp"
@@ -18,7 +18,8 @@ int main(int ac, char* av[]) {
     return 0;
   }
 #ifdef TIMING
-  Timer tfdmt ("BTIncoherent");
+  Timer tread ("BSON");
+  Timer tfdmt ("FDMT_CPU");
   Timer tslice ("Slicing");
   Timer tmom ("Moments");
 #endif 
@@ -43,23 +44,37 @@ int main(int ac, char* av[]) {
   string_t file;
   unsigned_t counter = 0;
   while (std::getline (list, file)) {
+    #ifdef TIMING
+    std::cout << file << std::endl;
+    #endif 
     if (counter++ >= 3) {
       ll.Write();
       counter = 0;
     }
+#ifdef TIMING
+    tread.Start ();
+#endif 
 	  BSON f;
     if ( !f.ReadFromFile (file) ) {
       std::cerr << "File read failed f=" << file << std::endl;
+      #ifdef TIMING
+          tread.StopPrint (std::cout);
+      #endif 
       continue;
     }
+#ifdef TIMING
+    tread.StopPrint (std::cout);
+#endif 
     ///////////  Bowtie
     // containers
-    ByteVector_t  bdata;
     Header_t hh; Trigger_t tt;
     f.ReadHeader (hh, tt);
-    Unsigned_t nsamps = f.nsamps / hh.nchans * 8 / hh.nbits;
+    SanityHeader (hh);
+    ByteVector_t  bdata;
+    Unsigned_t nsamps_requested = f.nsamps / hh.nchans * 8 / hh.nbits;
     // read data
-    f.ReadData (bdata, 0);
+    Unsigned_t nsamps_read = f.ReadData (bdata, 0);
+    Unsigned_t nsamps = nsamps_read / hh.nchans * 8 / hh.nbits;
     // Unpack
     Unsigned_t fsize = nsamps * hh.nchans;
     FloatVector_t data (fsize);
@@ -68,7 +83,7 @@ int main(int ac, char* av[]) {
     else if (hh.nbits == 8)
       Unpack8Bit (bdata, data);
     // dedisp
-    BTIncoherent dd;
+    FDMT_CPU dd;
     dd.CreatePlan (hh.tsamp, hh.nchans, hh.fch1, hh.foff);
     float_t dmlow = tt.dm - (0.5 * dwidth); 
     float_t dmhigh = tt.dm + (0.5 * dwidth);

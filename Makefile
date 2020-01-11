@@ -117,8 +117,8 @@ tsquery : $(addprefix ./ob/, tsquery.o  \
 
 tsfeature_lyon: $(addprefix ./ob/, tsfeature_lyon.o Moments.o\
 								Header.o BSON.o TrishulFormats.o \
-								PackUnpack.o Timer.o TrishulDedisperser.o BTIncoherent.o \
-								Incoherent.o Learnings.o )
+								PackUnpack.o Timer.o TrishulDedisperser.o FDMT_CPU.o \
+								Learnings.o )
 
 		$(LINK) $+ -L$(BOOST_LIB) -Wl,-rpath=$(BOOST_LIB) $(BOOST_LD) -o $@  
 
