@@ -1,5 +1,7 @@
 #!/usr/bin/env python2.7
 
+import gc
+
 import trishul.fbson   as tfb
 import trishul.features as tfx
 
@@ -22,11 +24,13 @@ if __name__ == "__main__":
   args = parse_args()
   ll = tfx.Lyon ("bigtest")
   for ff in args.fbson:
+    gc.collect ()
     print ff
     xx = tfb.FBSON (ff, loadFB=True)
-    print ff
+    print xx.tsamp
     ll.Extract (xx)
     del xx
+    gc.collect ()
   ll.Write ()
       
 

@@ -129,6 +129,8 @@ class FBSON(object):
             for k,v in x[sd].items():
                 self.__dict__[k] = v
         #
+        if self.tsamp >= 1:
+          self.tsamp = self.tsamp / 1E6
         self.nsamps = int (len(x['fb']) / self.nchans /self.nbits * 8)
         self.fb_loaded = loadFB
         self.fb = None
