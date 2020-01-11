@@ -47,7 +47,7 @@ class FDMT:
                 self.__ff2__(self.fmin, self.fmax)
                 ))
 
-        self.State = np.zeros([self.F,deltaT+1,self.T],self.dtype)
+        self.State = np.zeros([self.F,deltaT+2,self.T],self.dtype)
         self.State[:,0,:] = Image
 
         for i_dT in range(1,deltaT+1):

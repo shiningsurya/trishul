@@ -1,0 +1,9 @@
+# Python ignore
+
+# 
+*.pyc
+*.pyd
+
+__pycache__
+
+
