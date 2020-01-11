@@ -28,21 +28,29 @@ int main(int ac, char* av[]) {
   string_t ofile = change_dir (file, P1);
   string_t filename = change_extension (ofile, "");
 #ifdef TIMING
+  Timer tread ("FBSON");
   Timer tfdmt ("BTIncoherent");
   Timer tPlot ("mglPlot");
 #endif 
 	// bson
+#ifdef TIMING
+  tread.Start ();
+#endif 
 	BSON f;
 	const TrishulFormats& tf_f = f;
 	if ( !f.ReadFromFile (file) ) {
 		std::cerr << "File read failed\n";
 		return 1;
 	}
+#ifdef TIMING
+  tread.StopPrint (std::cout);
+#endif 
 	// containers
 	ByteVector_t  bdata;
 	// headers
 	Header_t hh; Trigger_t tt;
 	f.ReadHeader (hh, tt);
+	SanityHeader (hh);
 	Unsigned_t nsamps = f.nsamps / hh.nchans * 8 / hh.nbits;
 	// read data
 	Unsigned_t size = f.ReadData (bdata, 0);

@@ -37,9 +37,7 @@ class TrishulDedisperser {
 		void SetDM (const float_t a, const float_t b, const unsigned_t n) noexcept { 
 		  // freqs
 		  float_t fmax = freq_ch1;
-		  float_t fmin = fmax;
-		  if (freq_off < 0.0f) fmin += nchans*freq_off;
-		  else fmin -= nchans*freq_off;
+		  float_t fmin = fmax - (nchans*freq_off);
 		  // dms
 			float_t start = a;
 			float_t step = (b - a) / n;

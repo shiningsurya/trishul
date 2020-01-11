@@ -72,8 +72,6 @@ bool BSON::ReadHeader (Header_t& h, Trigger_t& t) {
 	t.width     = j["width"];
 	// header time
 	h.tsamp     = j["time"]["tsamp"];
-	// tsamp is always << 1
-	if (h.tsamp >= 1) h.tsamp /= 1E6;
 	// header frequency
 	h.fch1      = j["frequency"]["fch1"];
 	h.foff      = j["frequency"]["foff"];
@@ -134,7 +132,7 @@ bool BSON::WriteHeader (const Header_t& head, const Trigger_t& trig)  {
 	j["frequency"]["nchans"] = head.nchans;
 	// header indices
 	float_t dur = std::ceil(trig.i1 - trig.i0);
-	nsamps = trig.i1 >= trig.i0 ? dur/head.tsamp/1e-6 * head.nchans * head.nbits / 8 : 0L;
+	nsamps = trig.i1 >= trig.i0 ? dur/head.tsamp * head.nchans * head.nbits / 8 : 0L;
 	j["indices"]["nsamps"] = nsamps;
 	// header parameters
 	j["parameters"]["nbits"] = head.nbits;

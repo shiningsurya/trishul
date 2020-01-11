@@ -19,3 +19,11 @@ std::ostream& operator<<(std::ostream& os, const Trigger_t& f) {
 	return os;
 };
 
+void SanityHeader (Header_t& h) {
+	// foff positive
+	if (h.foff < 0) h.foff = - h.foff;
+	// cfreq
+	h.cfreq = h.fch1 - (0.5*h.nchans*h.foff);
+	// tsamp
+	if (h.tsamp > 1) h.tsamp /= 1E6;
+}

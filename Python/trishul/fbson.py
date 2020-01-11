@@ -115,10 +115,7 @@ class FBSON(object):
     ----------
     all the shebang
     '''
-    def __init__(self, filename, loadFB = False):
-        '''
-        Takes filename
-        '''
+    def __reader (self, filename, loadFB):
         self.filename = filename
         x = Read(filename)
         for k,v in x.items():
@@ -136,6 +133,20 @@ class FBSON(object):
         self.fb = None
         if self.fb_loaded:
             self.fb = unpack(x['fb'], self.nsamps, self.nchans, self.nbits)
+
+    def __init__(self, filename, loadFB = False):
+        '''
+        Takes filename
+        '''
+        self.__reader (filename, loadFB)
+
+    def __enter__ (self, filename):
+        self.__reader (filename, True)
+
+    def __exit__ (self):
+        if self.fb_loaded:
+            del self.fb
+            self.fb_loaded = False
 
     def Unpack(self):
         '''
