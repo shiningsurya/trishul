@@ -38,7 +38,7 @@ class FDMT:
 
     def __ff2__(self, f1, f2):
         '''f1 < f2'''
-        return 1.0/f1/f1 - 1.0/f2/f2
+        return 1.0/f2/f2 - 1.0/f1/f1
 
     def __initialization__ (self, Image):
         deltaT = int (np.ceil ( 
@@ -57,22 +57,23 @@ class FDMT:
 
     def __iteration__ (self, ii):
         self.df = 2 ** ii * self.fres
-        deltaT = int (np.ceil (  
-            ( self.maxdt-1 )                            *
-            self.__ff2__ (self.fmin, self.fmin+self.df) /
-            self.__ff2__ (self.fmin, self.fmax)
-            ))
-        
         F_jumps = int( self.F / 2**ii )
-        Output = np.zeros([F_jumps, deltaT+1, self.T],self.dtype)
-        
         correction = 0.5 * self.fres * bool (ii)
 
+        deltaT = int (np.ceil (  
+            ( self.maxdt-1 )                            *
+            self.__ff2__ (self.fmin+self.df, self.fmin) /
+            self.__ff2__ (self.fmax, self.fmin)
+            ))
+        
+        Output = np.zeros([F_jumps, deltaT+1, self.T],self.dtype)
+        
         for i_F in range(F_jumps):
-            fstart = self.fmax - (self.fmax - self.fmin)/float(F_jumps) * i_F 
-            fend   = self.fmax - (self.fmax - self.fmin)/float(F_jumps) * ( i_F+1 )
-            fmid   = 0.5*(fend + fstart)  - correction
-            fmidl  = 0.5*(fend + fstart)  + correction
+            fstart = self.fmax - self.df * i_F 
+            fend   = self.fmax - self.df * ( i_F+1 )
+            fmidl  = 0.5*(fend + fstart)  - correction
+            fmid   = 0.5*(fend + fstart)  + correction
+
             dTlocal  = int (np.ceil(
                 (self.maxdt-1)                        *
                 self.__ff2__(fstart, fend)            /
