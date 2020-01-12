@@ -12,6 +12,8 @@ class Timer {
     ch::time_point<clk>    start;
     ch::time_point<clk>    stop;
     float_t                dur;
+    float_t                dur_sec;
+    float_t                dur_msec;
 
   public:
     Timer ( string_t _s = string_t("unamed") ) : sid(_s) {}

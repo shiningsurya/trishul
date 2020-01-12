@@ -27,9 +27,10 @@ int main(int ac, char* av[]) {
   string_t file(av[1]);
   string_t ofile = change_dir (file, P1);
   string_t filename = change_extension (ofile, "");
+	std::cout << std::endl;
 #ifdef TIMING
   Timer tread ("FBSON");
-  Timer tfdmt ("BTIncoherent");
+  Timer tfdmt ("FDMT_CPU");
   Timer tPlot ("mglPlot");
 #endif 
 	// bson
@@ -83,6 +84,7 @@ int main(int ac, char* av[]) {
   tfdmt.StopPrint (std::cout);
 #endif 
 	////////////////////// 
+#ifndef TIMING
 	#ifdef BT
 	std::ofstream ofs ("bt.dat");
 	std::cout << "dm_low  =" << dmlow << std::endl;
@@ -107,6 +109,6 @@ int main(int ac, char* av[]) {
   tPlot.StopPrint (std::cout);
 #endif 
   #endif // ndef BT
-	//
+#endif // TIMING
 	return 0;
 }

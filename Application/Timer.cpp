@@ -7,9 +7,13 @@ void Timer::Start () {
 
 void Timer::Stop () {
   stop = clk::now ();
-  // duration
-  auto clk_dur = ch::duration_cast<ch::seconds>(stop - start);
-  dur = clk_dur.count ();
+  // clock 
+  auto sclk_dur = ch::duration_cast<ch::seconds>(stop - start);
+  auto mclk_dur = ch::duration_cast<ch::milliseconds>(stop - start);
+  //ticks
+  dur_sec  = sclk_dur.count ();
+  dur_msec = mclk_dur.count ();
+  dur = dur_sec + (dur_msec/1000.0);
 }
 
 std::ostream& operator<< (std::ostream& os, const Timer& t) {
