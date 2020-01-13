@@ -31,13 +31,13 @@ if __name__ == "__main__":
     fig  = plt.figure ()
     fig.suptitle (os.path.basename(f.filename))
     axbt = fig.add_axes([0.1, 0.1, 0.6, 0.6])
-    # [0.1, 0.7, 0.1, 0.7]
-    axpt = fig.add_axes([0.1, 0.7, 0.6, 0.2])
-    # [0.1, 0.7, 0.7, 0.9]
-    axdt = fig.add_axes([0.7, 0.1, 0.2, 0.6])
-    # [0.7, 0.9, 0.1, 0.7]
+    # [0.1, 0.6, 0.1, 0.8]
+    axpt = fig.add_axes([0.1, 0.7, 0.6, 0.2], sharex=axbt)
+    # [0.1, 0.6, 0.8, 0.9]
+    axdt = fig.add_axes([0.7, 0.1, 0.2, 0.6], sharey=axbt)
+    # [0.6, 0.9, 0.1, 0.8]
     axtt = fig.add_axes([0.7, 0.7, 0.2, 0.2])
-    # [0.7, 1.0, 0.7, 1.0]
+    # [0.6, 1.0, 0.8, 1.0]
     # plots
     axbt.imshow (bt, origin="lower", aspect="auto",
             extent=[times[0], times[-1], dms[0], dms[-1]]
