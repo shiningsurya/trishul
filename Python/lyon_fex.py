@@ -8,7 +8,11 @@ from scipy.stats import skew, kurtosis
 import trishul.fbson as tfb
 import trishul.dedisp as tdd
 # plotting
+import matplotlib
+matplotlib.rcParams.update ({'font.size': 8})
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+PLOTDIR="/users/sbethapu/lyonpng/"
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
@@ -16,6 +20,7 @@ if __name__ == "__main__":
     else:
         fb = sys.argv[1]    
     f  = tfb.FBSON (fb, loadFB=True)
+    bf,ext = os.path.splitext (os.path.basename (fb))
     dms, delays = tdd.DMRanger(f)
     gc.collect ()
     bt = tdd.BowTie (f, delays)
@@ -47,11 +52,13 @@ if __name__ == "__main__":
     axpt.plot (times, tsslice)
     axpt.text (0.75,0.9,"Time slice={0:3.2f}s".format(f.peak_time), transform=axpt.transAxes)
     axpt.xaxis.tick_top()
+    axpt.set_yticks ([])
     axdt.plot (dmslice, dms)
     axdt.text (0.2,0.97,"DM slice={0:3.2f}pc/cc".format(f.dm), transform=axdt.transAxes)
     axdt.yaxis.tick_right ()
+    axdt.set_xticks ([])
     # text
-    textstr = '{:^13}{:^13}{:^13}\n{:^13}{:^13.3f}{:^13.3f}\n{:^13}{:^13.3f}{:^13.3f}\n{:^13}{:^13.3f}{:^13.3f}\n{:^13}{:^13.3f}{:^13.3f}'
+    textstr = '{:^13}{:^13}{:^13}\n{:^13}{:^13.3f}{:^13.3f}\n{:^13}{:^13.3e}{:^13.3e}\n{:^13}{:^13.3f}{:^13.3f}\n{:^13}{:^13.3f}{:^13.3f}'
     ss = textstr.format (
         "Moments",     "TimeSlice",       "DMSlice",
         "Mean",        np.mean(tsslice),  np.mean(dmslice),
@@ -63,7 +70,7 @@ if __name__ == "__main__":
     axtt.text (0.0,1.0, ss, transform=axtt.transAxes,
     horizontalalignment="left", verticalalignment="top"
             )
-    plt.show ()
+    plt.savefig (os.path.join(PLOTDIR, bf)+".png", dpi=300)
 
 # np.where (bt == bt.max())
 # dmslice = bt[128]
