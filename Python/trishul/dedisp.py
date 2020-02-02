@@ -53,16 +53,16 @@ def MaxDelay (dms, freqs, tsamp=781.25E-6):
         delays[i] = d * 4148.741601 * ( if12 - if02 ) / tsamp
     return delays
 
-def FreqTable (nchans, f0, foff):
+def FreqTable (x):
     '''Handy function to create freq table'''
-    return f0 + ( np.arange (nchans) * foff )
+    return x.fch1 + ( np.arange (x.nchans) * x.foff )
 
 def DMRanger (x, dmsize=256, dmwidth=50, return_index=True):
     # get dm
     dms = np.linspace (x.dm - 0.5*dmwidth, x.dm + 0.5*dmwidth, dmsize)
     idm = np.searchsorted (dms, x.dm)
     dms[idm] = x.dm
-    freqs = FreqTable (x.nchans, x.fch1, x.foff)
+    freqs = FreqTable (x)
     fmin,fmax = freqs[-1], freqs[0]
     idelays  = MaxDelay (dms, freqs)
     if return_index:
@@ -79,11 +79,11 @@ def DMDelay (x):
     return x.dm * 4148.741601 * ( if12 - if02 )
 
 
-def DedispFBSON (x):
+def Incoherent(x):
     '''Dedisperses fbson object'''
     if x.fb is None:
         raise ValueError ("Filterbank not loaded!")
-    freqs = FreqTable (x.nchans, x.fch1, x.foff)
+    freqs = FreqTable (x)
     idelays = Delays (x.dm, freqs)
     return ddfb (x.fb, idelays)
 
@@ -92,4 +92,13 @@ def BowTie (x, idelays):
         raise ValueError ("FBSON filterbank is not loaded.")
     fff = FDMT (x.fch1, x.foff, x.nchans)
     return fff.Bowtie (x.fb, idelays)
+
+def DedispBundle (x):
+    ret = dict()
+    dms, delays   = DMRanger (x)
+    ret['bt']     = BowTie (x, delays)
+    ret['dd']     = Incoherent (x)
+    ret['dms']    = dms
+    ret['delays'] = delays
+    return ret
 

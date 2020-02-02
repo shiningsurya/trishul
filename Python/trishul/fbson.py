@@ -122,7 +122,7 @@ class FBSON(object):
             if k in ["sn", "dm", "width"]:
                 self.__dict__[k] = v
         # 
-        for sd in ["frequency", "time", "parameters"]:
+        for sd in ["frequency", "time", "parameters", "indices"]:
             for k,v in x[sd].items():
                 self.__dict__[k] = v
         #
