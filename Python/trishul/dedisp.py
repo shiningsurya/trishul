@@ -3,6 +3,7 @@ Dedispersion routines
 """
 import numpy as np
 from .fdmt import FDMT 
+from .incoherent import Dedisperser
 
 def ddfb (x, delays):
     '''Incoherent de-dispersion
@@ -85,7 +86,7 @@ def Incoherent(x):
         raise ValueError ("Filterbank not loaded!")
     freqs = FreqTable (x)
     idelays = Delays (x.dm, freqs)
-    return ddfb (x.fb, idelays)
+    return Dedisperser (x.fb, idelays)
 
 def BowTie (x, idelays):
     if x.fb is None:
