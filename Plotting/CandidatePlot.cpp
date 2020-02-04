@@ -15,7 +15,7 @@ cp::CandidatePlot (
 	// __ranger factor
 	xxfac = 0.1f;	
 	// chanout
-	chanout = 512;
+	chanout = 64;
 	// times
 	tleft = tright = 0.0f;
 }
@@ -29,7 +29,9 @@ void cp::Plot (const string_t& filename) {
   gr.ColumnPlot (2,1);
 	gr.SetRanges (tleft, tright, fhigh, flow);
 	gr.Box(); gr.Axis();
-	//gr.SetRange ('c', cmin, );
+	gr.SetRange ('c', _fb);
+	//gr.Dens (_fb,"kHhWUBNunLleGgEYyqQrRcw");
+	// new colorscheme     kHhWUBNunLleGgEYyqQrRcw
 	gr.Dens (_fb,"BbcyrR");
 	gr.Label ('x', "Time (s)", 0);
 	gr.Label ('y', "Freq (MHz)", 0);
@@ -86,7 +88,7 @@ void cp::Plot (const string_t& filename) {
 
 void cp::Read (const Header_t& h, const Trigger_t& t) {
   fhigh = flow = h.fch1; 
-  flow += (h.foff * h.nchans);
+  flow -= (h.foff * h.nchans);
 	chanin = h.nchans;
 	// parameters
 	sn = t.sn;
