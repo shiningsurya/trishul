@@ -70,7 +70,7 @@ cdef class FDMT:
             j_dT = self.T - i_dT
             self.State[0:self.F, i_dT  , i_dT:self.T]       =    \
             self.State[0:self.F, i_dT-1, i_dT:self.T]       +    \
-            Image     [0:self.F, j_dT:self.T]
+            Image     [0:self.F, 0:j_dT]
 
     def __iteration__ (self, unsigned int ii):
         self.df = 2 ** ii * self.fres
