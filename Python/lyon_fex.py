@@ -4,18 +4,19 @@ import gc
 import sys
 import numpy as np
 from scipy.stats import skew, kurtosis
-# my trishul
-import trishul.fbson  as tfb
-import trishul.dedisp as tdd
-import trishul.plot   as tp
 # plotting
 import matplotlib
 matplotlib.rcParams.update ({'font.size': 8})
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+# my trishul
+import trishul.fbson  as tfb
+import trishul.dedisp as tdd
+import trishul.plot   as tp
+##
 ROOT="/lustre/aoc/observers/nm-10966/fbsons/vd11core"
 PLOTDIR=ROOT+"/candplot/"
-FEADIR=ROOT+"lyonfea/"
+FEADIR=ROOT+"/lyonfea/"
 textstr = '{:^13}{:^13}{:^13}\n{:^13}{:^13.3e}{:^13.3e}\n{:^13}{:^13.3e}{:^13.3e}\n{:^13}{:^13.3f}{:^13.3f}\n{:^13}{:^13.3f}{:^13.3f}'
 fstr = "{0},{1},{2},{3},{4},{5},{6},{7}\n"
 if __name__ == "__main__":
@@ -44,8 +45,7 @@ if __name__ == "__main__":
     tsslice = bt[dt]
     # axes
     fig  = plt.figure ()
-    print type(dx)
-    #tp.Candplot (f, **dx, fig=fig)
+    tp.Candplot (f, fig=fig,**dx)
     plt.savefig (os.path.join(PLOTDIR, bf)+".png")
     # save
     with open(os.path.join(FEADIR, bf)+".lyon", "w") as f:
