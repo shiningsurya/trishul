@@ -1,11 +1,21 @@
 """
 Plotting routines
 """
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 from . import dedisp as tdd
+
+def fscrunch (fb, chanout=64):
+    '''Frequency crunching'''
+    nchans, nsamps = fb.shape
+    ret            = np.zeros((chanout,nsamps), dtype=fb.dtype)
+    step           = nchans//chanout
+    for i in range(chanout):
+        ret[i]     = np.mean(fb[i*step:(i+1)*step], axis=0)
+    return ret
 
 def BTCPlot (bt, dm=None, t=None, fig=None):
     '''
@@ -77,24 +87,28 @@ def Candplot (fbson, dms=None, delays=None, bt=None, dd=None, fig=None):
         bt = tdd.BowTie (fbson, delays)
     if dd is None:
         dd = tdd.DedispFBSON (fbson)
+    # fscrunch step
+    dd64 = fscrunch (dd, chanout=64)
     # aux steps
     btimes = np.arange (bt.shape[1]) * fbson.tsamp
     dtimes = np.arange (dd.shape[1]) * fbson.tsamp
     dfreqs = tdd.FreqTable (fbson)
     tslice = bt.shape[0]//2
     try:
-        fslice = int ( fbson.tpeak//fbson.tsamp )
+        pt = fbson.tpeak
     except:
-        fslice = int ( fbson.peak_time // fbson.tsamp )
+        pt = fbson.peak_time
+    fslice = int ( pt//fbson.tsamp )
     # axes objects
     axdd = fig.add_subplot (2,2,3)                                     # dedispersed filterbank
-    axbt = fig.add_subplot (2,2,1, sharex=axdd, projection='3d')       # bow-tie plan
+    axbt = fig.add_subplot (2,2,1, sharex=axdd, projection='3d', azim=-90, elev=65)       # bow-tie plan
     axst = fig.add_subplot (2,2,2, sharex=axdd)                        # s/n (t)
     axsd = fig.add_subplot (2,2,4)                                     # s/n (d)
     # plotting
-    axdd.imshow (dd, aspect='auto', extent=[dtimes[0], dtimes[-1], dfreqs[0], dfreqs[-1]], origin='lower')
+    axdd.imshow (dd64, aspect='auto', extent=[dtimes[0], dtimes[-1], dfreqs[0], dfreqs[-1]], origin='lower')
     axdd.set_xlabel ("Time [s]")
     axdd.set_ylabel ("Freq [MHz]")
+    # axdd.set_xlim(dtimes[0], dtimes[-1])
     # --
     axst.step (btimes, bt[tslice], 'k')
     axst.set_xlabel ("Time [s]")
@@ -123,9 +137,13 @@ def Candplot (fbson, dms=None, delays=None, bt=None, dd=None, fig=None):
     axbt.xaxis._axinfo['grid']['color'] = (1,1,1,0)
     axbt.yaxis._axinfo['grid']['color'] = (1,1,1,0)
     axbt.zaxis._axinfo['grid']['color'] = (1,1,1,0)
-    axbt.view_init (65, 270)
+    # axbt.yaxis.tick_right()
     # text
-    axst.text (0.9,1.0,fbson.__str__(), horizontalalignment='right', verticalalignment='top', transform=axst.transAxes)
+    txtstr = "Peak Time: {0:3.2f} s".format(pt)
+    axst.text (0.9,0.90,txtstr, horizontalalignment='right', verticalalignment='top', transform=axst.transAxes, fontsize=10, color='k')
+    txtstr = "Source: {0}".format(fbson.source_name)
+    axsd.text (0.9,1.0,txtstr, horizontalalignment='right', verticalalignment='top', transform=axsd.transAxes, fontsize=10, color='r')
     # last step
+    fig.suptitle (os.path.basename(fbson.filename))
     fig.tight_layout()
     
