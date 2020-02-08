@@ -51,31 +51,27 @@ def unpack(ix, nsamps, nchans, nbits):
     Numpy array of size nsamps*nchans
     the fastest changing axis is frequency
     '''
-    ret = np.ones((nsamps*nchans), dtype=np.float32)
+    rsize = nsamps*nchans
+    ret = np.ones((rsize), dtype=np.float32)
     idx = 0
     # two bit
     if nbits == 2:
-        for ib in ix:
-            a,b,c,d = unpack_2bit(ib)
-            ret[idx] = a
-            idx = idx + 1
-            ret[idx] = b
-            idx = idx + 1
-            ret[idx] = c
-            idx = idx + 1
-            ret[idx] = d
+        for iret in range (0, rsize, 4):
+            a,b,c,d = unpack_2bit (ix[idx])
+            ret[iret+0] = a
+            ret[iret+1] = b
+            ret[iret+2] = c
+            ret[iret+3] = d
             idx = idx + 1
     elif nbits == 4:
-        for ib in ix:
-            a,b = unpack_4bit(ib)
-            ret[idx] = a
-            idx = idx + 1
-            ret[idx] = b
+        for iret in range (0, rsize, 2):
+            a,b = unpack_4bit (ix[idx])
+            ret[iret+0] = a
+            ret[iret+1] = b
             idx = idx + 1
     elif nbits == 8:
-        for ib in ix:
-            a = unpack_8bit(ib)
-            ret[idx] = a
+        for iret in range(rsize):
+            ret[iret] = unpack_8bit (ix[idx])
             idx = idx + 1
     # return after reshaping
     return ret.reshape((nsamps, nchans)).T
@@ -125,10 +121,17 @@ class FBSON(object):
         for sd in ["frequency", "time", "parameters"]:
             for k,v in x[sd].items():
                 self.__dict__[k] = v
-        #
+        # tsamp correction
         if self.tsamp >= 1:
           self.tsamp = self.tsamp / 1E6
-        self.nsamps = int (len(x['fb']) / self.nchans /self.nbits * 8)
+        self._size_ = len(x['fb'])
+        bitc = 8 / self.nbits
+        n = (1.0 * self._size_ / self.nchans) * (bitc)
+        self.nsamps = int(n)
+        dn = n - int(n)
+        # nsamps correction
+        #if dn > 0.0:
+        #  self.nsamps = self.nsamps - 1
         self.fb_loaded = loadFB
         self.fb = None
         if self.fb_loaded:
