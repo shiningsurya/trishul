@@ -111,14 +111,14 @@ cdef class FDMT:
                 ))
             
             for i_dT in range(dTlocal+1):
-                dT_mid  = round (i_dT * (
+                dT_mid  = int (round (i_dT * (
                     self.__ff2__(fstart, fmid) / 
                     self.__ff2__(fstart, fend)
-                    ))
-                dT_midl = round (i_dT * (
+                    )))
+                dT_midl = int(round (i_dT * (
                     self.__ff2__(fstart, fmidl)  /
                     self.__ff2__(fstart, fend)
-                    ))
+                    )))
                 dT_rest = i_dT - dT_midl
                 
                 i_T_min = self.T - dT_midl
