@@ -101,14 +101,17 @@ def Candplot (fbson, dms=None, delays=None, bt=None, dd=None, fig=None):
     try:
         pt = fbson.tpeak
     except:
-        pt = fbson.peak_time
+        _, ipt = np.where (bt == bt.max())
+        pt = ipt[0] * fbson.tsamp
     fslice = int ( pt//fbson.tsamp )
     # axes objects
-    axdd = fig.add_subplot (2,2,3)                                     # dedispersed filterbank
+    axdd = fig.add_subplot (2,2,3)                                                          # dedispersed filterbank
     if not no_3d:
-      axbt = fig.add_subplot (2,2,1, sharex=axdd, projection='3d', azim=-90, elev=65)       # bow-tie plan
-    axst = fig.add_subplot (2,2,2, sharex=axdd)                        # s/n (t)
-    axsd = fig.add_subplot (2,2,4)                                     # s/n (d)
+      axbt = fig.add_subplot (2,2,1, sharex=axdd, projection='3d', azim=-90, elev=65)       # bow-tie plane
+    else:
+      axbt = fig.add_subplot (2,2,1, sharex=axdd)                                           # bow-tie plane
+    axst = fig.add_subplot (2,2,2)                                                          # s/n (t)
+    axsd = fig.add_subplot (2,2,4)                                                          # s/n (d)
     # plotting
     axdd.imshow (dd64, aspect='auto', extent=[dtimes[0], dtimes[-1], dfreqs[0], dfreqs[-1]], origin='lower')
     axdd.set_xlabel ("Time [s]")
@@ -116,6 +119,9 @@ def Candplot (fbson, dms=None, delays=None, bt=None, dd=None, fig=None):
     # axdd.set_xlim(dtimes[0], dtimes[-1])
     # --
     axst.step (btimes, bt[tslice], 'k')
+    _a = max (fslice - 128,0)
+    _b = min (fslice + 128, btimes.size-1)
+    axst.set_xlim (btimes[_a], btimes[_b])
     axst.set_xlabel ("Time [s]")
     axst.spines['left'].set_visible (False)
     axst.spines['right'].set_visible (False)
@@ -132,16 +138,19 @@ def Candplot (fbson, dms=None, delays=None, bt=None, dd=None, fig=None):
     tmesh, dmesh = np.meshgrid (btimes, dms)
     # print ("proj=", axbt.get_proj())
     # axbt.get_proj = lambda : np.dot (Axes3D.get_proj(axbt), np.diag([0.75,0.5,1.5,1.]))
-    axbt.plot_surface (tmesh, dmesh, bt, cmap=plt.cm.jet, rcount=100, ccount=100)
+    if not no_3d:
+      axbt.plot_surface (tmesh, dmesh, bt, cmap=plt.cm.jet, rcount=100, ccount=100)
+      axbt.set_zticks ([])
+      axbt.zaxis.set_pane_color ((1.0,1.0,1.0,0.0))
+      axbt.xaxis.set_pane_color ((1.0,1.0,1.0,0.0))
+      axbt.yaxis.set_pane_color ((1.0,1.0,1.0,0.0))
+      axbt.xaxis._axinfo['grid']['color'] = (1,1,1,0)
+      axbt.yaxis._axinfo['grid']['color'] = (1,1,1,0)
+      axbt.zaxis._axinfo['grid']['color'] = (1,1,1,0)
+    else :
+      axbt.imshow (bt, cmap=plt.cm.jet, aspect='auto', extent=[btimes[0], btimes[-1], dms[0], dms[-1]])
     axbt.set_xlabel ("Time [s]")
     axbt.set_ylabel ("DM [pc/cc]")
-    axbt.set_zticks ([])
-    axbt.zaxis.set_pane_color ((1.0,1.0,1.0,0.0))
-    axbt.xaxis.set_pane_color ((1.0,1.0,1.0,0.0))
-    axbt.yaxis.set_pane_color ((1.0,1.0,1.0,0.0))
-    axbt.xaxis._axinfo['grid']['color'] = (1,1,1,0)
-    axbt.yaxis._axinfo['grid']['color'] = (1,1,1,0)
-    axbt.zaxis._axinfo['grid']['color'] = (1,1,1,0)
     # axbt.yaxis.tick_right()
     # text
     txtstr = "Peak Time: {0:3.2f} s".format(pt)
