@@ -65,12 +65,14 @@ cdef class FDMT:
         self.State = np.zeros([self.F,deltaT+2,self.T],dtype=f_t)
         self.State[0:self.F,0,0:self.T] = Image
 
+        print ("State shape = ({0}, {1}, {2}) size = {3} MB".format(self.F,deltaT+2,self.T, self.State.nbytes/1E6))
+
         cdef Py_ssize_t j_dT = 0
         for i_dT in range(1,deltaT+1):
             j_dT = self.T - i_dT
             self.State[0:self.F, i_dT  , i_dT:self.T]       =    \
             self.State[0:self.F, i_dT-1, i_dT:self.T]       +    \
-            Image     [0:self.F, j_dT:self.T]
+            Image     [0:self.F, 0:j_dT]
 
     def __iteration__ (self, unsigned int ii):
         self.df = 2 ** ii * self.fres
@@ -130,7 +132,10 @@ cdef class FDMT:
                 Output     [i_F    , i_dT   , i_T_min:i_T_max]                    =                    \
                 self.State [2*i_F  , dT_mid , i_T_min:i_T_max]                    +                    \
                 self.State [2*i_F+1, dT_rest, i_T_min + dT_midl:i_T_max+dT_midl]
+        # save memory 
+        del self.State
         self.State = Output
+        print ("State shape = ({0}, {1}, {2}) size = {3} MB".format(F_jumps,deltaT+1,self.T, self.State.nbytes/1E6))
     
     def __worker__ (self, np.ndarray[cf_t, ndim=2] Image, Py_ssize_t maxdt):
         '''Internal method
