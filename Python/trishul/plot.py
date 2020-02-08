@@ -3,7 +3,11 @@ Plotting routines
 """
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+try:
+  from mpl_toolkits.mplot3d import Axes3D
+  no_3d = False
+except ImportError:
+  no_3d = True
 
 from . import dedisp as tdd
 
@@ -88,7 +92,8 @@ def Candplot (fbson, dms=None, delays=None, bt=None, dd=None, fig=None):
         fslice = int ( fbson.peak_time // fbson.tsamp )
     # axes objects
     axdd = fig.add_subplot (2,2,3)                                     # dedispersed filterbank
-    axbt = fig.add_subplot (2,2,1, sharex=axdd, projection='3d')       # bow-tie plan
+    if not no_3d:
+      axbt = fig.add_subplot (2,2,1, sharex=axdd, projection='3d')     # bow-tie plan
     axst = fig.add_subplot (2,2,2, sharex=axdd)                        # s/n (t)
     axsd = fig.add_subplot (2,2,4)                                     # s/n (d)
     # plotting
