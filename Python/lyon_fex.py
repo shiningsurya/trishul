@@ -12,8 +12,10 @@ import matplotlib
 matplotlib.rcParams.update ({'font.size': 8})
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-PLOTDIR="/users/sbethapu/lyonpng/"
-
+PLOTDIR="/lustre/aoc/observers/nm-10966/lyonpng/"
+FEADIR="/lustre/aoc/observers/nm-10966/lyonfea/"
+textstr = '{:^13}{:^13}{:^13}\n{:^13}{:^13.3e}{:^13.3e}\n{:^13}{:^13.3e}{:^13.3e}\n{:^13}{:^13.3f}{:^13.3f}\n{:^13}{:^13.3f}{:^13.3f}'
+fstr = "{0},{1},{2},{3},{4},{5},{6},{7}\n"
 if __name__ == "__main__":
     if len(sys.argv) == 1:
         fb = '/home/shining/work/vlite/searches/snestimator/20191121_045949_muos_ea99_dm56.75_sn106.58.fbson'
@@ -28,18 +30,26 @@ if __name__ == "__main__":
     dmcount, tscount = bt.shape
     times = np.arange (tscount) * f.tsamp
     # slicing
-    pt = int ( f.peak_time / f.tsamp )
     dt = int (0.5 * dmcount)
-    dmslice = bt[:,pt]
-    tsslice = bt[pt]
+    # peak_time correction
+    if f.peak_time < 0.0:
+      pt = delays[dt]  - delays[0]
+      # assuming one dm-delay correction
+    else:
+      pt = int ( f.peak_time / f.tsamp )
+    ###
+    [idt],[ipt] = np.where (bt == bt.max())
+    ###
+    dmslice = bt[:,ipt]
+    tsslice = bt[dt]
     # axes
     fig  = plt.figure ()
     fig.suptitle (os.path.basename(f.filename))
     axbt = fig.add_axes([0.1, 0.1, 0.6, 0.6])
     # [0.1, 0.8, 0.1, 0.6]
-    axpt = fig.add_axes([0.1, 0.7, 0.6, 0.2])
+    axpt = fig.add_axes([0.1, 0.7, 0.6, 0.2], sharex=axbt)
     # [0.1, 0.6, 0.7, 0.9]
-    axdt = fig.add_axes([0.7, 0.1, 0.2, 0.6])
+    axdt = fig.add_axes([0.7, 0.1, 0.2, 0.6], sharey=axbt)
     # [0.7, 0.9, 0.1, 0.7]
     axtt = fig.add_axes([0.7, 0.7, 0.2, 0.2])
     # [0.7, 1.0, 0.7, 1.0]
@@ -50,7 +60,7 @@ if __name__ == "__main__":
     axbt.set_xlabel ("Time (s)")
     axbt.set_ylabel ("DM (pc/cc)")
     axpt.plot (times, tsslice)
-    axpt.text (0.75,0.9,"Time slice={0:3.2f}s".format(f.peak_time), transform=axpt.transAxes)
+    axpt.text (0.75,0.9,"Time slice={0:3.2f}s".format(pt*f.tsamp), transform=axpt.transAxes)
     axpt.xaxis.tick_top()
     axpt.set_yticks ([])
     axdt.plot (dmslice, dms)
@@ -58,7 +68,6 @@ if __name__ == "__main__":
     axdt.yaxis.tick_right ()
     axdt.set_xticks ([])
     # text
-    textstr = '{:^13}{:^13}{:^13}\n{:^13}{:^13.3f}{:^13.3f}\n{:^13}{:^13.3e}{:^13.3e}\n{:^13}{:^13.3f}{:^13.3f}\n{:^13}{:^13.3f}{:^13.3f}'
     ss = textstr.format (
         "Moments",     "TimeSlice",       "DMSlice",
         "Mean",        np.mean(tsslice),  np.mean(dmslice),
@@ -71,6 +80,15 @@ if __name__ == "__main__":
     horizontalalignment="left", verticalalignment="top"
             )
     plt.savefig (os.path.join(PLOTDIR, bf)+".png", dpi=300)
+    # save
+    with open(os.path.join(FEADIR, bf)+".lyon", "w") as f:
+      f.write(fstr.format (
+        np.mean(tsslice),  np.mean(dmslice),
+        np.var(tsslice),   np.var(dmslice),
+        skew(tsslice),     skew(dmslice),
+        kurtosis(tsslice), kurtosis(dmslice)
+      ))
+      # tmean, dmean, tvar, dvar, tskew, dskew, tkur, dkur
 
 # np.where (bt == bt.max())
 # dmslice = bt[128]
