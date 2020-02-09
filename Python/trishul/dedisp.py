@@ -4,6 +4,7 @@ Dedispersion routines
 import numpy as np
 from .fdmt import FDMT 
 from .incoherent import Dedisperser
+from collections import namedtuple
 
 def ddfb (x, delays):
     '''Incoherent de-dispersion
@@ -95,11 +96,11 @@ def BowTie (x, idelays):
     return fff.Bowtie (x.fb, idelays)
 
 def DedispBundle (x):
-    ret = dict()
-    dms, delays   = DMRanger (x)
-    ret['bt']     = BowTie (x, delays)
-    ret['dd']     = Incoherent (x)
-    ret['dms']    = dms
-    ret['delays'] = delays
+    ret                   = namedtuple ("DedispBundle", ['bt', 'dd', 'btimes', 'dtimes', 'dms', 'delays'])
+    ret.dms, ret.delays   = DMRanger (x)
+    ret.bt                = BowTie (x, ret.delays)
+    ret.btimes            = np.arange (ret.bt.shape[1]) * x.tsamp
+    ret.dd                = Incoherent (x)
+    ret.dtimes            = np.arange (ret.dd.shape[1]) * x.tsamp
     return ret
 
