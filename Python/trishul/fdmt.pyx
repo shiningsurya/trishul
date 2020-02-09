@@ -38,6 +38,7 @@ cdef class FDMT:
             First channel. The highest frequency.
         foff : float
             Frequency resolution.
+            always positive here!
         nchans: unsigned int
             Number of channels
         '''
