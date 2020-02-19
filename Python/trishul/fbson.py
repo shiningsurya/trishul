@@ -9,6 +9,15 @@ import sys
 
 __all__ = ['FBSON']
 
+def fscrunch (fb, chanout=64):
+    '''Frequency crunching'''
+    nchans, nsamps = fb.shape
+    ret            = np.zeros((chanout,nsamps), dtype=fb.dtype)
+    step           = nchans//chanout
+    for i in range(chanout):
+        ret[i]     = np.mean(fb[i*step:(i+1)*step], axis=0)
+    return ret
+
 def Read(fname):
     """
     Given a filename or list of filenames, returns the Python dict.
@@ -112,7 +121,7 @@ class FBSON(object):
     all the shebang
     '''
     def __reader (self, filename, loadFB):
-        self.filename = filename
+        self.filename = os.path.basename (filename)
         x = Read(filename)
         for k,v in x.items():
             if k in ["sn", "dm", "width"]:
