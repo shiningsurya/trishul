@@ -11,15 +11,7 @@ except ImportError:
   no_3d = True
 
 from . import dedisp as tdd
-
-def fscrunch (fb, chanout=64):
-    '''Frequency crunching'''
-    nchans, nsamps = fb.shape
-    ret            = np.zeros((chanout,nsamps), dtype=fb.dtype)
-    step           = nchans//chanout
-    for i in range(chanout):
-        ret[i]     = np.mean(fb[i*step:(i+1)*step], axis=0)
-    return ret
+from .fbson import fscrunch
 
 def BTCPlot (bt, dm=None, t=None, fig=None):
     '''
