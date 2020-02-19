@@ -4,7 +4,6 @@
 class TrishulDedisperser {
   public:
     static inline float_t _single_dm_delay (float_t dm, float_t f0, float_t foff, unsigned_t nchans) {
-      foff = foff >= 0 ? foff : -foff;
       float_t f1 = f0 - (nchans*foff);
       return 4148.741601 * (1.0/f0/f0 - 1.0/f1/f1) * dm;
     }
@@ -47,7 +46,9 @@ class TrishulDedisperser {
 			  idelays.push_back ( _single_dm_delay (start, fmin, fmax) /tsamp);
 			}
 			//
-			_is_dmlist_ready = true;
+			_is_dmlist_ready = false;
+			// this needs to be true for dedisp case
+			// this is because of my bad design
 		}
 
 		void SetDM (const FloatVector_t& fv) noexcept {

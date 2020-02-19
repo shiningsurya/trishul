@@ -107,7 +107,7 @@ bool BSON::ReadHeader (Header_t& h, Trigger_t& t) {
 	// agtriggerhook made err
 	// whenever this happens, which shouldn't happen, 
 	// peak_time is adjusted and sufficient logging to cerr is done
-	t.peak_time = j["time"]["peak_time"];
+	t.peak_time = j["time"]["tpeak"];
 	if (t.peak_time < 0) {
 	  t.peak_time = TrishulDedisperser::_single_dm_delay (t.dm, h.fch1, h.foff, h.nchans);
     std::cerr << "[!!] Trishul::Formats::BSON invalid peak-time received with filename=" << filename << std::endl;

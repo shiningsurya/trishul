@@ -4,11 +4,13 @@ Plotting routines
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-try:
-  from mpl_toolkits.mplot3d import Axes3D
-  no_3d = False
-except ImportError:
-  no_3d = True
+#try:
+#  from mpl_toolkits.mplot3d import Axes3D
+#  no_3d = False
+#  raise ImportError
+#except ImportError:
+#  no_3d = True
+no_3d = True
 
 from . import dedisp as tdd
 from .fbson import fscrunch

@@ -41,6 +41,7 @@ int main(int ac, char* av[]) {
 	// headers
 	Header_t hh; Trigger_t tt;
 	f.ReadHeader (hh, tt);
+	SanityHeader (hh);
 	Unsigned_t nsamps = f.nsamps / hh.nchans * 8 / hh.nbits;
 	// read data
 	Unsigned_t size = f.ReadData (bdata, 0);

@@ -68,8 +68,10 @@ void Dedisp::Execute (
 			(dedisp_byte*) out.data()     , sizeof(float_t) * 8,
 			DEDISP_USE_DEFAULT
 	);
-	if (error != DEDISP_NO_ERROR ) 
+	if (error != DEDISP_NO_ERROR ) {
+	  std::cout << "error=" << error << std::endl;
 		throw TrishulError("Failed to execute!.");
+	}
 }
 
 void Dedisp::Execute (
@@ -114,6 +116,8 @@ void Dedisp::Execute (
 			(dedisp_byte*) out.data()     , sizeof(float_t) * 8,
 			DEDISP_USE_DEFAULT
 	);
-	if (error != DEDISP_NO_ERROR ) 
+	if (error != DEDISP_NO_ERROR ) {
+	  std::cout << "error=" << error << std::endl;
 		throw TrishulError("Failed to execute!.");
+	}
 }
