@@ -36,11 +36,10 @@ dbson:
   - width            # s
   - time:
     - peak_time      # s
-    - tpeak          # s
     - tstart         # MJD
     - tsamp          # s
     - duration       # 0.2s?
-    - nsamps         # 256?
+    - ddnsamps       # de-dispersed filterbank nsamps 256?
   - frequency:
     - fch1           # MHz
     - foff           # MHz (+)
@@ -49,7 +48,6 @@ dbson:
     - i0             # epoch float64
     - i1             # epoch float64
     - epoch          # Observation start epoch
-    - fbsize         # sizeof(data)
   - parameters:
     - nbits
     - antenna        # station-id
@@ -61,6 +59,7 @@ dbson:
     - dm1            # start DM pc/cc
     - dmoff          # DM offset pc/cc (100/256)?
     - ndm            # 256?
+    - btnsamps       # bowtie plane nsamps 256?
   # zero level
   - data:             
     - dd             # packed dedispersed filterbank

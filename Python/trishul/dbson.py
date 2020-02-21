@@ -18,7 +18,7 @@ def scaler (x):
 
 __all__ = ["DBSON"]
 
-def WriteDBSON (x):
+def WriteDBSON (x, outdir = "./"):
     '''Writes DBSON 
 
     Arguments
@@ -28,7 +28,7 @@ def WriteDBSON (x):
     ret  = dict () # this gets written
     #
     ret['time'] = dict ()
-    for k in ['peak_time','tpeak','tstart','tsamp','duration','nsamps']:
+    for k in ['peak_time','tstart','tsamp','duration','ddnsamps']:
         ret['time'][k] = x.__dict__[k]
     #
     ret['frequency'] = dict ()
@@ -36,7 +36,7 @@ def WriteDBSON (x):
         ret['frequency'][k] = x.__dict__[k]
     # 
     ret['indices'] = dict ()
-    for k in ['i0','i1','epoch','fbsize']:
+    for k in ['i0','i1','epoch']:
         ret['indices'][k] = x.__dict__[k]
     # 
     ret['parameters'] = dict ()
@@ -44,7 +44,7 @@ def WriteDBSON (x):
         ret['parameters'][k] = x.__dict__[k]
     # 
     ret['dms'] = dict ()
-    for k in ['dm1','dmoff','ndm']:
+    for k in ['dm1','dmoff','ndm','btnsamps']:
         ret['dms'][k] = x.__dict__[k]
     # 
     for k in ['sn','dm','width', 'filename']:
@@ -54,7 +54,7 @@ def WriteDBSON (x):
     ret['dd'] = scaler (x.dd).tobytes ()
     # writing
     fname,_ = os.path.splitext (x.filename)
-    with open ("{0}.dbson".format(fname),"wb") as f:
+    with open (os.path.join (outdir, "{0}.dbson".format(fname)),"wb") as f:
         ubjson.dump (ret, f)
 
 class DBSON(object):
@@ -94,8 +94,8 @@ class DBSON(object):
         # data products
         _dd      = np.frombuffer (x['dd'], dtype=np.uint8)
         _bt      = np.frombuffer (x['bt'], dtype=np.uint8)
-        self.dd  = np.reshape (_dd, (self.nchans, self.nsamps))
-        self.bt  = np.reshape (_bt, (self.ndm, self.nsamps))
+        self.dd  = np.reshape (_dd, (self.nchans, self.ddnsamps))
+        self.bt  = np.reshape (_bt, (self.ndm, self.btnsamps))
 
     def __read_fbson__(self, xf, dx=None, chanout=64,sampout=256):
         '''Read from fbson
@@ -118,6 +118,8 @@ class DBSON(object):
         pt = 0.1  # peak_time
         try:
             pt = x.tpeak
+            if pt > x.duration:
+                raise ValueError 
         except:
             _, ipt = np.where (dx.bt == dx.bt.max())
             pt = ipt[0] * x.tsamp
@@ -130,7 +132,8 @@ class DBSON(object):
             istart = 0
         if istop > samps:
             istop = samps-1
-        self.nsamps = istop - istart
+        self.ddnsamps = istop - istart
+        self.btnsamps = istop - istart
         # putting stuff in
         # data
         self.dd = dd64[:,istart:istop]
@@ -145,10 +148,9 @@ class DBSON(object):
         # indices
         for k in ['i0', 'i1', 'epoch']:
             self.__dict__[k] = x.__dict__[k]
-        self.fbsize = self.nsamps * chanout * x.nbits / 8
         # frequency
         self.fch1   = x.fch1
-        self.foff   = x.foff * chanout / x.nchans
+        self.foff   = x.foff * x.nchans / chanout
         self.nchans = chanout
         # time
         for k in ['tsamp','peak_time']:
@@ -156,8 +158,8 @@ class DBSON(object):
         cut = istart * x.tsamp
         if pt < cut:
             raise ValueError ("[EE] shouldn't happen error")
-        self.tpeak = pt - cut
-        self.tstart = x.tstart + (self.tpeak/86400.0) 
+        self.peak_time = pt - cut
+        self.tstart = x.tstart + (self.peak_time/86400.0) 
         self.duration = sampout * x.tsamp
         # last
         for k in ['sn','dm','width','filename']:
@@ -167,7 +169,7 @@ class DBSON(object):
         return  \
             "S/N: {0:3.2f}\nDM: {1:3.2f} pc/cc\nWidth: {2:3.2f} ms\nPeak Time: {3:3.2f} s\nAntenna: {4}\nSource: {5}\n"\
             "Tstart(MJD): {7:7.2f}\nNbits: {8:1d}\nNchans: {9:4d}".format(
-            self.sn, self.dm, 1e3*self.width, self.tpeak, 
+            self.sn, self.dm, 1e3*self.width, self.peak_time, 
             self.antenna, self.source_name, self.duration, self.tstart, self.nbits, self.nchans)
 
 
