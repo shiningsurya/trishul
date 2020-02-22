@@ -28,7 +28,7 @@ def WriteDBSON (x, outdir = "./"):
     ret  = dict () # this gets written
     #
     ret['time'] = dict ()
-    for k in ['peak_time','tstart','tsamp','duration','ddnsamps']:
+    for k in ['peak_time','tstart','tsamp','duration','nsamps']:
         ret['time'][k] = x.__dict__[k]
     #
     ret['frequency'] = dict ()
@@ -44,7 +44,7 @@ def WriteDBSON (x, outdir = "./"):
         ret['parameters'][k] = x.__dict__[k]
     # 
     ret['dms'] = dict ()
-    for k in ['dm1','dmoff','ndm','btnsamps']:
+    for k in ['dm1','dmoff','ndm']:
         ret['dms'][k] = x.__dict__[k]
     # 
     for k in ['sn','dm','width', 'filename']:
@@ -94,8 +94,8 @@ class DBSON(object):
         # data products
         _dd      = np.frombuffer (x['dd'], dtype=np.uint8)
         _bt      = np.frombuffer (x['bt'], dtype=np.uint8)
-        self.dd  = np.reshape (_dd, (self.nchans, self.ddnsamps))
-        self.bt  = np.reshape (_bt, (self.ndm, self.btnsamps))
+        self.dd  = np.reshape (_dd, (self.nchans, self.nsamps))
+        self.bt  = np.reshape (_bt, (self.ndm, self.nsamps))
 
     def __read_fbson__(self, xf, dx=None, chanout=64,sampout=256):
         '''Read from fbson
@@ -132,8 +132,8 @@ class DBSON(object):
             istart = 0
         if istop > samps:
             istop = samps-1
-        self.ddnsamps = istop - istart
-        self.btnsamps = istop - istart
+        self.nsamps = istop - istart
+        self.duration = self.nsamps / x.tsamp
         # putting stuff in
         # data
         self.dd = dd64[:,istart:istop]
@@ -146,6 +146,7 @@ class DBSON(object):
         for k in ['ra', 'dec', 'group', 'source_name', 'antenna', 'nbits']:
             self.__dict__[k] = x.__dict__[k]
         # indices
+        self.epoch = x.epoch
         for k in ['i0', 'i1', 'epoch']:
             self.__dict__[k] = x.__dict__[k]
         # frequency
@@ -158,9 +159,10 @@ class DBSON(object):
         cut = istart * x.tsamp
         if pt < cut:
             raise ValueError ("[EE] shouldn't happen error")
-        self.peak_time = pt - cut
+        self.peak_time = pt   - cut
+        self.i0        = x.i0 + cut
+        self.i1        = self.i0 + self.duration
         self.tstart = x.tstart + (self.peak_time/86400.0) 
-        self.duration = sampout * x.tsamp
         # last
         for k in ['sn','dm','width','filename']:
             self.__dict__[k] = x.__dict__[k]

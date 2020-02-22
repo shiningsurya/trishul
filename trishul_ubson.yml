@@ -38,8 +38,8 @@ dbson:
     - peak_time      # s
     - tstart         # MJD
     - tsamp          # s
-    - duration       # 0.2s?
-    - ddnsamps       # de-dispersed filterbank nsamps 256?
+    - nsamps         # nsamps 256?
+    - duration       # s
   - frequency:
     - fch1           # MHz
     - foff           # MHz (+)
@@ -59,7 +59,6 @@ dbson:
     - dm1            # start DM pc/cc
     - dmoff          # DM offset pc/cc (100/256)?
     - ndm            # 256?
-    - btnsamps       # bowtie plane nsamps 256?
   # zero level
   - data:             
     - dd             # packed dedispersed filterbank
