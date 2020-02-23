@@ -10,10 +10,13 @@ from .fbson import fscrunch
 from .fbson import FBSON 
 from .dedisp import DedispBundle
 
-def scaler (x):
+def scaler (x, flip=False):
     MIN = x.min()
     MAX = x.max()
-    y = np.array( ( 255/(MAX-MIN) ) * (x - MIN) , dtype=np.uint8 )
+    if flip:
+        y = np.array( ( 255/(MAX-MIN) ) * (x.T.ravel() - MIN) , dtype=np.uint8 )
+    else:
+        y = np.array( ( 255/(MAX-MIN) ) * (x.ravel() - MIN) , dtype=np.uint8 )
     return y
 
 __all__ = ["DBSON"]
@@ -51,7 +54,7 @@ def WriteDBSON (x, outdir = "./"):
         ret[k] = x.__dict__[k]
     # data products
     ret['bt'] = scaler (x.bt).tobytes ()
-    ret['dd'] = scaler (x.dd).tobytes ()
+    ret['dd'] = scaler (x.dd, flip=True).tobytes ()
     # writing
     fname,_ = os.path.splitext (x.filename)
     with open (os.path.join (outdir, "{0}.dbson".format(fname)),"wb") as f:
@@ -92,9 +95,9 @@ class DBSON(object):
         if self.tsamp >= 1:
             self.tsamp = self.tsamp / 1E6
         # data products
-        _dd      = np.frombuffer (x['dd'], dtype=np.uint8)
-        _bt      = np.frombuffer (x['bt'], dtype=np.uint8)
-        self.dd  = np.reshape (_dd, (self.nchans, self.nsamps))
+        _dd      = np.fromiter (x['dd'], dtype=np.uint8)
+        _bt      = np.fromiter (x['bt'], dtype=np.uint8)
+        self.dd  = np.reshape (_dd, (self.nsamps, self.nchans)).T
         self.bt  = np.reshape (_bt, (self.ndm, self.nsamps))
 
     def __read_fbson__(self, xf, dx=None, chanout=64,sampout=256):
@@ -133,7 +136,7 @@ class DBSON(object):
         if istop > samps:
             istop = samps-1
         self.nsamps = istop - istart
-        self.duration = self.nsamps / x.tsamp
+        self.duration = self.nsamps * x.tsamp
         # putting stuff in
         # data
         self.dd = dd64[:,istart:istop]
@@ -162,7 +165,7 @@ class DBSON(object):
         self.peak_time = pt   - cut
         self.i0        = x.i0 + cut
         self.i1        = self.i0 + self.duration
-        self.tstart = x.tstart + (self.peak_time/86400.0) 
+        self.tstart = x.tstart
         # last
         for k in ['sn','dm','width','filename']:
             self.__dict__[k] = x.__dict__[k]
