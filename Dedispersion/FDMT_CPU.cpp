@@ -90,7 +90,7 @@ void fc::Iteration (const unsigned_t& i) {
 			State  [midt +salpha*iF*2 + sbeta*itt]  ;
 			// 
 			for (Unsigned_t itt = 0; itt <bp; itt++)
-			//Output.at (iF,idt, itt) = State.at (2*iF   , midt, itt) + State.at (2*iF +1, idt-midtl, itt-midtl);
+			//Output.at (iF,idt, itt) = State.at (2*iF   , midt, itt) + State.at (2*iF +1, idt-midtl, itt+midtl);
 			{
 			Output [idt       +alpha*iF             +beta*itt]                =
 			State  [midt      +2*salpha*iF          +sbeta*itt]               +
