@@ -98,6 +98,8 @@ def BowTie (x, idelays):
 def DedispBundle (x):
     ret                   = namedtuple ("DedispBundle", ['bt', 'dd', 'btimes', 'dtimes', 'dms', 'delays'])
     ret.dms, ret.delays   = DMRanger (x)
+    print (ret.delays.max())
+    print (x.fb.shape)
     ret.bt                = BowTie (x, ret.delays)
     ret.btimes            = np.arange (ret.bt.shape[1]) * x.tsamp
     ret.dd                = Incoherent (x)

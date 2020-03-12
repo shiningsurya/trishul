@@ -4,14 +4,16 @@ cimport cython
 import numpy  as np
 cimport numpy as np
 
-FDTYPE = np.float32
+ctypedef fused datype:
+    np.ndarray[np.float32_t, ndim=2]
+    np.ndarray[np.uint8_t, ndim=2]
+
 DDTYPE = np.uint64
-ctypedef np.float32_t FDTYPE_t 
 ctypedef np.uint64_t DDTYPE_t
 
 @cython.boundscheck (False)
 @cython.wraparound  (False)
-def Dedisperser (np.ndarray[FDTYPE_t, ndim=2] fb, np.ndarray[DDTYPE_t, ndim=1] delays):
+def Dedisperser (datype fb, np.ndarray[DDTYPE_t, ndim=1] delays):
     if fb.shape[0] != delays.shape[0]:
         raise ValueError ("Incorrect delays size!")
     # constants 
@@ -23,7 +25,7 @@ def Dedisperser (np.ndarray[FDTYPE_t, ndim=2] fb, np.ndarray[DDTYPE_t, ndim=1] d
     cdef Py_ssize_t ddnsamps = nsamps - maxdelay
     cdef Py_ssize_t tidx     = 0
     # output array
-    cdef np.ndarray[FDTYPE_t, ndim=2] ret = np.zeros ([nchans, ddnsamps], dtype=FDTYPE)
+    cdef datype ret = np.zeros ([nchans, ddnsamps], dtype=fb.dtype)
     # algo
     for isamp in range (ddnsamps):
         for ichan in range (nchans):

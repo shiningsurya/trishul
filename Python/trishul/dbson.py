@@ -74,10 +74,16 @@ class DBSON(object):
         '''
         if isinstance (xf, str) and xf.endswith("dbson"):
             self.__read_dbson__ (xf)
-        elif isinstance(xf, str) or  isinstance (xf, FBSON):
+        elif isinstance(xf, str) or  isinstance (xf, object):
             self.__read_fbson__ (xf, dx=dx, chanout=chanout, sampout=sampout)
         else:
             raise ValueError ("Input argument should be (str,FBSON, dbson)")
+
+    def __enter__ (self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        del self
 
     def __read_dbson__ (self, filename):
         self.filename = os.path.basename (filename)
