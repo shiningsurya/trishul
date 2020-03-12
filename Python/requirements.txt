@@ -1,3 +1,4 @@
 ubjson
 cython
-
+torch
+torchvision

@@ -1,0 +1,59 @@
+#!/usr/bin/env python
+import random
+import numpy as np
+import trishul.defaults as tdf
+import trishul.faker as tfk
+import trishul.fakefb as ffb
+
+def parse_args ():
+    import argparse
+    ap = argparse.ArgumentParser(prog='tsfake', description='Trishul tool for fake dbson creation.', epilog='Part of Trishul')
+    add = ap.add_argument
+    add('sn', help = 'S/N. If nsn>1, sn uniform (6, sn)', default=8.5, type=float)
+    add('dm', help = 'DM [pc/cc]. If ndm>1, dm uniform (50, dm)', default=154, type=float)
+    add('wd', help = 'Width [ms]. If nwd>1, wd uniform (1, wd)', default=2.7, type=float)
+    add("--nsn", help="# of S/N", default=1, type=int)
+    add("--ndm", help="# of DM", default=1, type=int)
+    add("--nwd", help="# of Width", default=1, type=int)
+    add("--dir", help='Output directory',dest='odir')
+    add("--seed", help="Random seed for filename and uniform dist.", default=0, type=int)
+    add("--rms", help="RMS for noise", default=40.0, type=int)
+    return ap.parse_args ()
+
+if __name__ == "__main__":
+    args = parse_args ()
+    SEED = args.seed
+    if SEED == 0:
+        r = random.SystemRandom ()
+        SEED = r.randint (0, 999999)
+        np.random.seed (SEED)
+    if args.nsn == 1:
+        TSN = [args.sn]
+    else:
+        if args.sn < 6:
+            raise ValueError ("With nsn>1, sn>6 to sample from uniform[6, sn].")
+        TSN = np.random.uniform (6.0, args.sn, args.nsn)
+    if args.ndm == 1:
+        TDM = [args.dm]
+    else:
+        if args.dm < 50:
+            raise ValueError ("With ndm>1, dm>50 to sample from uniform[50, dm].")
+        TDM = np.random.uniform (50.0, args.dm, args.ndm)
+    if args.nwd == 1:
+        TWD = [args.wd]
+    else:
+        if args.wd < 1:
+            raise ValueError ("With nwd>1, wd>1 to sample from uniform[1, wd].")
+        TWD = np.random.uniform (1, args.wd, args.nwd)
+    #
+    myfaker = ffb.Fakefb (tdf.TSAMP, tdf.NCHAN4K, tdf.FCH1, tdf.FOFF4K, args.rms)
+    for tsn in TSN:
+        for tdm in TDM:
+            for twd in TWD:
+                tfk.TrueDBSON (
+                    tsn, tdm, twd, 
+                    odir=args.odir, 
+                    fake=myfaker,
+                    seed = args.seed
+                )
+
