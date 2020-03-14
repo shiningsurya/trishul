@@ -130,6 +130,7 @@ class DBSON(object):
             if pt > x.duration:
                 raise ValueError 
         except:
+            print ("[!!] DBSON::ReadFBSON didn't find tpeak.")
             _, ipt = np.where (dx.bt == dx.bt.max())
             pt = ipt[0] * x.tsamp
         fslice = int ( pt//x.tsamp )
@@ -142,6 +143,8 @@ class DBSON(object):
         if istop > samps:
             istop = samps-1
         self.nsamps = istop - istart
+        if self.nsamps != sampout:
+            print ("[!!] DBSON::ReadFBSON made nsamps={0} when requested nsamps={1}.".format (self.nsamps,sampout))
         self.duration = self.nsamps * x.tsamp
         # putting stuff in
         # data

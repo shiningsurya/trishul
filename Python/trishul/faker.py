@@ -31,7 +31,7 @@ def TrueDBSON (sn, dm, width, pt = 0.1, nsamps=256, odir="./", fake=None, rms=4.
     ret.source_name = "TFAKE" # True FAKE
     fake = fake or Fakefb (ret.tsamp, ret.nchans, ret.fch1, ret.foff, rms)
     # XXX 0.3 added for 30 dm-delay for bowtie plane
-    ret.fb       = fake(sn, dm, width/1e3, pt, 0.3)
+    ret.fb       = fake(sn, dm, width/1e3, pt, 0.6)
     ret.nsamps   = ret.fb.nbytes
     ret.duration = ret.fb.shape[1] * ret.tsamp
     ret.tpeak    = pt
