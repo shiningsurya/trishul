@@ -1,0 +1,65 @@
+#!/usr/bin/env python
+import os
+import numpy as np
+from tqdm import tqdm
+# trishul imports
+import trishul.deeputils   as tdu
+import trishul.deepmodels  as tdm
+import trishul.deeptrainer as tdt
+# torch imports
+import torch       as t
+import torch.nn    as tn
+import torch.optim as to
+
+
+def parse_args ():
+    import argparse
+    ap = argparse.ArgumentParser(prog='tsdeep', description='Trishul tool for deep learning tasks.', epilog='Part of Trishul')
+    add = ap.add_argument
+    # add ('cnn', help='CNN model class.', choices=tdm.MODELS)
+    # add ('it', help="Iteration index. defaults to latest.", default=None, type=int)
+    # add ('params', help='Hyperparameters YAML file.', )
+    add ('--root-dir', help='Data root directory.', default="/home/shining/work/vlite/triggers/", dest='rdir')
+    add ('--model-dir', help="Model save directory.", default='/home/shining/work/trishul/Models/', dest='mdir')
+    return ap.parse_args ()
+
+if __name__ == "__main__":
+    args = parse_args ()
+    # dataset
+    IIDX = "it004"
+    DDIR = os.path.join (args.rdir, IIDX)
+    lisf = "{0}_{1}.list"
+    TLIS = lisf.format (IIDX, "true")
+    FLIS = lisf.format (IIDX, "false")
+    DSet = tdu.BTElement (TLIS, FLIS, DDIR)
+    train_l, val_l   = DSet.train_test_split ()
+    t_DataLoader     = tdu.DataLoader (DSet, sampler=train_l)
+    v_DataLoader     = tdu.DataLoader (DSet, sampler=val_l)
+    # cnn
+    CNN  = tdm.Byakugan (123)
+    CNNID= "{0}_{1}_{2}".format(CNN.name, IIDX, CNN.idx)
+    LFN  = tn.CrossEntropyLoss ()
+    OPM  = to.Adam (CNN.parameters(), lr=1e-3)
+    # metrics
+    METS = {'recall':tdu.Recall_score, 'precision':tdu.Precision_score}
+    training_curve    = tdu.Curve (METS.keys(), "training")
+    validation_curve  = tdu.Curve (METS.keys(), "validation")
+    # train
+    num_epochs = 6
+    EPC  = np.arange (num_epochs)
+    tEPC = tqdm (EPC, desc="Epochs", unit="epochs", total=num_epochs)
+    for i in tEPC:
+        # training
+        tmet = tdt.Trainer (CNN, OPM, LFN, t_DataLoader, METS)
+        training_curve (tmet)
+        # validation
+        vmet = tdt.Evaluator (CNN, LFN, v_DataLoader, METS)
+        validation_curve (vmet)
+    # save metrics
+    curves = [training_curve, validation_curve]
+    tdu.WritePickle (curves, os.path.join(args.mdir, "{0}_curves.pkl".format(CNNID)))
+    tdu.PlotCurve (curves, os.path.join(args.mdir, "{0}_curves.pdf".format(CNNID)))
+    # dump model
+    tdu.DumpModel (os.path.join (args.mdir, "{0}_state".format(CNNID)), CNN, OPM)
+
+
