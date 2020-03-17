@@ -22,6 +22,8 @@ I0       = 1000000010.0
 # I1 is I0 + dur
 # GROUP    = "19000101_211202"
 
+DM_DELAY = 4.15E3 * (320.005**-2 - 361.941**-2)
+
 class DefDBSON(object):
     """Fake dbson preloaded with defaults.
         
