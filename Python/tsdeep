@@ -33,19 +33,25 @@ if __name__ == "__main__":
     FLIS = lisf.format (IIDX, "false")
     DSet = tdu.BTElement (TLIS, FLIS, DDIR)
     train_l, val_l   = DSet.train_test_split ()
-    t_DataLoader     = tdu.DataLoader (DSet, sampler=train_l)
+    t_DataLoader     = tdu.DataLoader (DSet, sampler=train_l, batch_size=3)
     v_DataLoader     = tdu.DataLoader (DSet, sampler=val_l)
     # cnn
-    CNN  = tdm.Byakugan (123)
+    CNN  = tdm.Byakugan (222)
+    ## load
+    if False:
+        IFILE = "/home/shining/work/trishul/Models/Byakugan_it004_129_state.pth"
+        tdu.LoadModel (IFILE, CNN)
+    ## load
     CNNID= "{0}_{1}_{2}".format(CNN.name, IIDX, CNN.idx)
-    LFN  = tn.CrossEntropyLoss ()
+    wei  = t.Tensor ([1.0, 30.0])
+    LFN  = tn.CrossEntropyLoss (wei)
     OPM  = to.Adam (CNN.parameters(), lr=1e-3)
     # metrics
     METS = {'recall':tdu.Recall_score, 'precision':tdu.Precision_score}
-    training_curve    = tdu.Curve (METS.keys(), "training")
-    validation_curve  = tdu.Curve (METS.keys(), "validation")
+    training_curve    = tdu.Curve (METS.keys(),epoch=0, type_="training")
+    validation_curve  = tdu.Curve (METS.keys(),epoch=0,  type_="validation")
     # train
-    num_epochs = 6
+    num_epochs = 1
     EPC  = np.arange (num_epochs)
     tEPC = tqdm (EPC, desc="Epochs", unit="epochs", total=num_epochs)
     for i in tEPC:
@@ -57,9 +63,18 @@ if __name__ == "__main__":
         validation_curve (vmet)
     # save metrics
     curves = [training_curve, validation_curve]
-    tdu.WritePickle (curves, os.path.join(args.mdir, "{0}_curves.pkl".format(CNNID)))
-    tdu.PlotCurve (curves, os.path.join(args.mdir, "{0}_curves.pdf".format(CNNID)))
+    try:
+        tdu.WritePickle (curves, os.path.join(args.mdir, "{0}_curves.pkl".format(CNNID)))
+    except:
+        print ("[EE] Writing pickle.")
+    try:
+        tdu.PlotCurve (curves, os.path.join(args.mdir, "{0}_curves.pdf".format(CNNID)))
+    except:
+        print ("[EE] Plotting learning curves.")
     # dump model
-    tdu.DumpModel (os.path.join (args.mdir, "{0}_state".format(CNNID)), CNN, OPM)
+    try:
+        tdu.DumpModel (os.path.join (args.mdir, "{0}_state".format(CNNID)), CNN, OPM)
+    except:
+        print ("[EE] Dumping model")
 
 

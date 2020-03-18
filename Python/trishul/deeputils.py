@@ -168,11 +168,12 @@ def Precision_score (outputs, labels):
     return skm.precision_score (la, ou)
 
 class Curve (object):
-    def __init__ (self, metrics, type_="learning"):
+    def __init__ (self, metrics, epoch = 0, type_="learning"):
         self.t       = type_
         self.m       = list( metrics )
         self.metrics = {k:[] for k in metrics}
         self.metrics['loss'] = []
+        self.e       = epoch
 
     def __call__ (self, rmet):
         '''What is returned by trainer/evaluator'''
@@ -185,14 +186,60 @@ class Curve (object):
 
     def __getstate__(self):
         mv = [self.metrics[k] for k in self.m]
-        return [self.t, self.m, self.metrics['loss'], mv]
+        return [self.e, self.t, self.m, self.metrics['loss'], mv]
 
-    def __setstate__ (self, t, m, ml, mv):
-        self.t = t
-        self.m = m
-        self.metrics['loss'] = ml
-        for k,v in zip(m, mv):
+    def __setstate__ (self, state):
+        self.e = state[0]
+        self.t = state[1]
+        self.m = state[2]
+        self.metrics = dict ()
+        self.metrics['loss'] = state[3]
+        for k,v in zip(state[2], state[4]):
             self.metrics[k] = v
+
+    def append (self, o):
+        """Adds another curve object to self
+            All checks are done prior to calling 
+        """
+        self.metrics['loss'] += o.metrics['loss']
+        for k in self.m:
+            self.metrics[k]  += o.metrics[k]
+
+    def __lt__ (self, o):
+        """Less than o"""
+        return self.e < o.e
+    def __eq__ (self, o):
+        """Equal"""
+        return self.e == o.e
+
+    def __repr__ (self):
+        """String"""
+        return "Trishul.DeepUtils.Curve Epoch:{0} of type:{1} with len:{2}".format(self.e, self.t, len(self.metrics['loss']))
+
+###
+COLOR_DICT                            = dict ()
+COLOR_DICT['training']                = dict ()
+COLOR_DICT['training']['loss']        = "r"
+COLOR_DICT['training']['recall']      = "g"
+COLOR_DICT['training']['precision']   = "b"
+COLOR_DICT['validation']              = dict ()
+COLOR_DICT['validation']['loss']      = "k"
+COLOR_DICT['validation']['recall']    = "y"
+COLOR_DICT['validation']['precision'] = "m"
+###
+def MergeCurves (*args):
+    """Merge curves from different epoch runs"""
+    args = sorted (args)
+    ts = set ( [a.t for a in args] )
+    ms = []
+    for a in args:
+        ms += a.m
+    ms = list(set(ms))
+    # for all such training/validation
+    state = {k:Curve(ms,type_=k) for k in ts}
+    for a in args:
+        state[a.t].append (a)
+    return list (state.values())
 
 def PlotCurve (x, saveas=None):
     """x is Curve object or list"""
@@ -200,9 +247,10 @@ def PlotCurve (x, saveas=None):
     if isinstance (x, Curve):
         x = [x]
     for ilx in x:
-        ax[0].plot (ilx['loss'], label="{0}-loss".format(ilx.t))
+        epc = np.arange(len(ilx['loss'])) + ilx.e
+        ax[0].step (epc, ilx['loss'], label="{0}-loss".format(ilx.t))
         for k in ilx.m:
-            ax[1].plot (ilx[k], label="{0}-{1}".format(ilx.t, k))
+            ax[1].step (epc, ilx[k], label="{0}-{1}".format(ilx.t, k))
     # legend
     ax[0].legend()
     ax[1].legend()
@@ -221,7 +269,7 @@ def WritePickle (x, ofile):
 
 def ReadPickle (ifile):
     """Read any pickle file"""
-    with open (ofile, "rb") as f:
+    with open (ifile, "rb") as f:
         return pkl.load (f)
 
 def DumpModel (ofile, model, optimizer=None, best=False):
@@ -237,3 +285,10 @@ def DumpModel (ofile, model, optimizer=None, best=False):
         ff = "{0}_best.pth".format(ofile)
         torch.save (wr, ff)
 
+def LoadModel (ifile, model, optimizer=None):
+    """Loads the model"""
+    ret = torch.load (ifile)
+    model.load_state_dict (ret['model_state'])
+    if optimizer:
+        optimizer.load_state_dict (ret['optimizer_state'])
+    return ret
