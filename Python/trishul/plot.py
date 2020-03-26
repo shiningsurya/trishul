@@ -111,6 +111,7 @@ def Candplot (fbson, dms=None, delays=None, bt=None, dd=None, fig=None):
     axdd.set_xlabel ("Time [s]")
     axdd.set_ylabel ("Freq [MHz]")
     # axdd.set_xlim(dtimes[0], dtimes[-1])
+    axdd.set_ylim (360, 320)
     # --
     axst.step (btimes, bt[tslice], 'k')
     _a = max (fslice - 128,0)
