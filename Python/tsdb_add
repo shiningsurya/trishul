@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+import numpy as np
+import trishul.dbson as tdb
+import argparse
+
+def parse_args ():
+    ap = argparse.ArgumentParser(prog='tsdb_add', description='Trishul tool for dbson coaddition.', epilog='Part of Trishul')
+    add = ap.add_argument
+    add('dbson', help = 'List of dbsons', nargs='+')
+    add('-o', help='Filename', dest='ofile')
+    # done
+    return ap.parse_args()
+
+if __name__ == "__main__":
+    args = parse_args ()
+    ndbs = len(args.dbson)
+    indbs = 1.0 / ndbs
+    bt   = np.zeros((256, 256), dtype=np.float)
+    dd   = np.zeros((64, 256), dtype=np.float)
+    for dbs in args.dbson:
+        with tdb.DBSON (dbs) as db:
+            bt += (indbs * db.bt)
+            dd += (indbs * db.dd)
+    #
+    BTFILE = "{}_BT".format(args.ofile)
+    DDFILE = "{}_DD".format(args.ofile)
+    np.save (BTFILE, bt)
+    np.save (DDFILE, dd)
+    
+
+
+
