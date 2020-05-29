@@ -69,7 +69,11 @@ class BTElement (Dataset):
         ret['target'] = self.target[idx]
         fn,_ = os.path.splitext ( self.filelist[idx].strip() )
         with DBSON (os.path.join (self.root, "{0}.dbson".format(fn))) as dbs:
-            ret['bt'] = np.expand_dims (np.array(dbs.bt, dtype=np.float32), axis=0)
+            abt   = np.array (dbs.bt, dtype=np.float32)
+            #bbt   = np.flipud (np.fliplr (abt))
+            #cbt   = np.dstack ([0.5*(abt+bbt),0.5*(abt-bbt)])
+            #ret['bt'] = np.moveaxis (cbt, 2, 0)
+            ret['bt'] = np.expand_dims (abt, axis=0)
 
         if self.transform:
             ret['bt'] = self.transform (ret['bt'])

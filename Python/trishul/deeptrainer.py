@@ -23,8 +23,8 @@ def Trainer (model, optimizer, loss_fn, dataloader, metrics):
     tdl = tqdm (dataloader, unit="bt", desc="Trainer")
     for i, sample_b  in enumerate (tdl):
         # torch Variables
-        train_b    = Variable (sample_b['bt'])
-        target_b   = Variable (sample_b['target'])
+        train_b    = Variable (sample_b['bt'].cuda(non_blocking=True))
+        target_b   = Variable (sample_b['target'].cuda(non_blocking=True))
         # forward pass
         output_b   = model (train_b)
         # loss
@@ -59,8 +59,8 @@ def Evaluator (model, loss_fn, dataloader, metrics):
     tdl = tqdm (dataloader, unit="bt", desc="Evaluator")
     for i, sample_b  in enumerate (tdl):
         # torch Variables
-        eval_b    = Variable (sample_b['bt'])
-        target_b   = Variable (sample_b['target'])
+        eval_b    = Variable (sample_b['bt'].cuda(non_blocking=True))
+        target_b   = Variable (sample_b['target'].cuda(non_blocking=True))
         # forward pass them
         output_b  = model (eval_b)
         # loss

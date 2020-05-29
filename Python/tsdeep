@@ -19,8 +19,9 @@ def parse_args ():
     # add ('cnn', help='CNN model class.', choices=tdm.MODELS)
     # add ('it', help="Iteration index. defaults to latest.", default=None, type=int)
     # add ('params', help='Hyperparameters YAML file.', )
-    add ('--root-dir', help='Data root directory.', default="/home/shining/work/vlite/triggers/", dest='rdir')
-    add ('--model-dir', help="Model save directory.", default='/home/shining/work/trishul/Models/', dest='mdir')
+    add ('--root-dir', help='Data root directory.', default="/home/vlite-master/surya/triggers/", dest='rdir')
+    add ('--model-dir', help="Model save directory.", default='/home/vlite-master/surya/triggers/Models/', dest='mdir')
+    add ('--ds-dir', help="Dataset directory.", default='/home/vlite-master/surya/trishul/Datasets/', dest='dsir')
     return ap.parse_args ()
 
 if __name__ == "__main__":
@@ -29,21 +30,22 @@ if __name__ == "__main__":
     IIDX = "it004"
     DDIR = os.path.join (args.rdir, IIDX)
     lisf = "{0}_{1}.list"
-    TLIS = lisf.format (IIDX, "true")
-    FLIS = lisf.format (IIDX, "false")
+    TLIS = os.path.join (args.dsir, lisf.format (IIDX, "true"))
+    FLIS = os.path.join (args.dsir, lisf.format (IIDX, "false"))
     DSet = tdu.BTElement (TLIS, FLIS, DDIR)
     train_l, val_l   = DSet.train_test_split ()
-    t_DataLoader     = tdu.DataLoader (DSet, sampler=train_l, batch_size=3)
-    v_DataLoader     = tdu.DataLoader (DSet, sampler=val_l)
+    t_DataLoader     = tdu.DataLoader (DSet, sampler=train_l, batch_size=1, pin_memory=True)
+    v_DataLoader     = tdu.DataLoader (DSet, sampler=val_l, pin_memory=True)
     # cnn
-    CNN  = tdm.Byakugan (222)
+    # CNN  = tdm.Byakugan (333)
+    CNN  = tdm.VGG11A (466).cuda()
     ## load
     if False:
         IFILE = "/home/shining/work/trishul/Models/Byakugan_it004_129_state.pth"
         tdu.LoadModel (IFILE, CNN)
     ## load
     CNNID= "{0}_{1}_{2}".format(CNN.name, IIDX, CNN.idx)
-    wei  = t.Tensor ([1.0, 30.0])
+    wei  = t.FloatTensor ([1.0, 30.0]).cuda()
     LFN  = tn.CrossEntropyLoss (wei)
     OPM  = to.Adam (CNN.parameters(), lr=1e-3)
     # metrics
@@ -51,7 +53,7 @@ if __name__ == "__main__":
     training_curve    = tdu.Curve (METS.keys(),epoch=0, type_="training")
     validation_curve  = tdu.Curve (METS.keys(),epoch=0,  type_="validation")
     # train
-    num_epochs = 1
+    num_epochs = 10
     EPC  = np.arange (num_epochs)
     tEPC = tqdm (EPC, desc="Epochs", unit="epochs", total=num_epochs)
     for i in tEPC:
