@@ -1,0 +1,84 @@
+#!/usr/bin/env python
+import os
+import numpy as np
+from tqdm import tqdm
+# trishul imports
+import trishul.deeputils   as tdu
+import trishul.deepmodels  as tdm
+import trishul.deeptrainer as tdt
+# torch imports
+import torch       as t
+import torch.nn    as tn
+import torch.optim as to
+
+
+def parse_args ():
+    import argparse
+    ap = argparse.ArgumentParser(prog='tscae', description='Trishul tool for Convolutional Autoencoder tasks.', epilog='Part of Trishul')
+    add = ap.add_argument
+    # add ('cnn', help='CNN model class.', choices=tdm.MODELS)
+    # add ('it', help="Iteration index. defaults to latest.", default=None, type=int)
+    # add ('params', help='Hyperparameters YAML file.', )
+    add ('--root-dir', help='Data root directory.', default="/home/vlite-master/surya/triggers/", dest='rdir')
+    add ('--model-dir', help="Model save directory.", default='/home/vlite-master/surya/triggers/Models/', dest='mdir')
+    add ('--ds-dir', help="Dataset directory.", default='/home/vlite-master/surya/trishul/Datasets/', dest='dsir')
+    return ap.parse_args ()
+
+if __name__ == "__main__":
+    args = parse_args ()
+    # dataset
+    IIDX = "it004"
+    DDIR = os.path.join (args.rdir, IIDX)
+    lisf = "{0}_{1}.list"
+    TLIS = os.path.join (args.dsir, lisf.format (IIDX, "true"))
+    FLIS = os.path.join (args.dsir, lisf.format (IIDX, "false"))
+    DSet = tdu.Element (TLIS, FLIS, args.dsir)
+    train_l, val_l   = DSet.train_test_split ()
+    t_DataLoader     = tdu.DataLoader (DSet, sampler=train_l, batch_size=1, pin_memory=True)
+    v_DataLoader     = tdu.DataLoader (DSet, sampler=val_l, pin_memory=True)
+    # cnn
+    # CNN  = tdm.Byakugan (333)
+    # CNN  = tdm.VGG11A (466).cuda()
+    CAE  = tdm.GomuGomu (155).cuda()
+    ## load
+    if False:
+        IFILE = "/home/shining/work/trishul/Models/Byakugan_it004_129_state.pth"
+        tdu.LoadModel (IFILE, CAE)
+    ## load
+    CAEID= "{0}_{1}_{2}".format(CAE.name, IIDX, CAE.idx)
+    LFN  = tn.MSELoss ()
+    OPM  = to.Adam (CAE.parameters(), lr=1e-3)
+    # metrics
+    # METS = {'recall':tdu.Recall_score, 'precision':tdu.Precision_score}
+    METS = {}
+    training_curve    = tdu.Curve (METS.keys(),epoch=0, type_="training")
+    validation_curve  = tdu.Curve (METS.keys(),epoch=0,  type_="validation")
+    # train
+    num_epochs = 10
+    EPC  = np.arange (num_epochs)
+    tEPC = tqdm (EPC, desc="Epochs", unit="epochs", total=num_epochs)
+    for i in tEPC:
+        # training
+        tmet = tdt.AETrainer (CAE, OPM, LFN, t_DataLoader, METS)
+        training_curve (tmet)
+        # validation
+        vmet = tdt.AEEvaluator (CAE, LFN, v_DataLoader, METS)
+        validation_curve (vmet)
+    # save metrics
+    # curves = [training_curve, validation_curve]
+    curves = []
+    try:
+        tdu.WritePickle (curves, os.path.join(args.mdir, "{0}_curves.pkl".format(CAEID)))
+    except:
+        print ("[EE] Writing pickle.")
+    try:
+        tdu.PlotCurve (curves, os.path.join(args.mdir, "{0}_curves.pdf".format(CAEID)))
+    except:
+        print ("[EE] Plotting learning curves.")
+    # dump model
+    try:
+        tdu.DumpModel (os.path.join (args.mdir, "{0}_state".format(CAEID)), CAE, OPM)
+    except:
+        print ("[EE] Dumping model")
+
+

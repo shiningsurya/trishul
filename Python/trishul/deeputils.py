@@ -15,6 +15,9 @@ from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from torch.utils.data import Sampler
 from torch.utils.data import SubsetRandomSampler 
+# torch vision imports
+from skimage.measure import block_reduce
+import torchvision.transforms as tvt
 # trishul imports
 from .dbson         import DBSON 
 
@@ -77,6 +80,83 @@ class BTElement (Dataset):
 
         if self.transform:
             ret['bt'] = self.transform (ret['bt'])
+        return ret
+
+    def train_test_split (self, test_size=0.3, shuffle=True, stratify=True):
+        """returns indices to split train/test"""
+        d_i  = np.arange (self.n)
+        if stratify:
+            train_i, test_i = train_test_split (d_i, test_size=0.3, shuffle=shuffle, stratify=self.target)
+        else:
+            train_i, test_i = train_test_split (d_i, test_size=0.3, shuffle=shuffle)
+        train_s         = SubsetRandomSampler (train_i)
+        test_s          = SubsetRandomSampler (test_i)
+        return train_s, test_s
+
+class Element (Dataset):
+    """
+    DBSON element of dataset.
+
+    Two channels.
+    Shape = (2, 64, 64)
+    First channel for Bowtie, second channel for de-dispersed filterbank
+    """
+    def __init__ (self, true, false, root_dir, transform=None):
+        """
+        Args:
+            true_file (string, list): Path to true file list or list
+            false_file (string, list): Path to false file list or list
+            root_dir (string) : Path to the dbson file
+            transform (callable, optional) : Optional transform to be applied on a sample
+        """
+        truelist = []
+        if isinstance (true, str):
+            with open (true, "r") as f:
+                truelist = f.readlines ()
+        elif isinstance (true, list):
+            truelist = true
+        else:
+            raise ValueError ("Expected either list or str, but got=", type(true))
+        ntrue = len(truelist)
+        falselist = []
+        if isinstance (false, str):
+            with open (false, "r") as f:
+                falselist = f.readlines ()
+        elif isinstance (false, list):
+            falselist = false
+        else:
+            raise ValueError ("Expected either list or str, but got=", type(false))
+        nfalse = len(falselist)
+        #
+        self.filelist   = truelist + falselist
+        self.target     = ([1]*ntrue) + ([0]*nfalse)
+        self.n          = ntrue + nfalse
+        self.root       = root_dir
+        self.transform  = transform
+
+    def __len__(self):
+        return self.n
+
+    def __getitem__ (self, idx):
+        if torch.is_tensor (idx):
+            idx = idx.tolist ()
+
+        ret = dict ()
+        ret['target'] = self.target[idx]
+        fn,_ = os.path.splitext ( self.filelist[idx].strip() )
+        with DBSON (os.path.join (self.root, "{0}.dbson".format(fn))) as dbs:
+            bt    = np.array (dbs.bt, dtype=np.float32) / 255.
+            dd    = np.array (dbs.dd, dtype=np.float32) / 255.
+            ## because all the dbsons sizes are hardcoded
+            tbt   = block_reduce (bt.reshape(1, 256, 256), (1,4,4), func=np.mean)
+            tdd   = block_reduce (dd.reshape(1, 64, 256), (1,1,4), func=np.mean)
+            #bbt   = np.flipud (np.fliplr (abt))
+            #cbt   = np.dstack ([0.5*(abt+bbt),0.5*(abt-bbt)])
+            #ret['bt'] = np.moveaxis (cbt, 2, 0)
+            ret['payload'] = np.concatenate ((tbt, tdd), axis=0)
+
+        if self.transform:
+            ret['payload'] = self.transform (ret['payload'])
         return ret
 
     def train_test_split (self, test_size=0.3, shuffle=True, stratify=True):
