@@ -101,36 +101,24 @@ class Element (Dataset):
     Shape = (2, 64, 64)
     First channel for Bowtie, second channel for de-dispersed filterbank
     """
-    def __init__ (self, true, false, root_dir, transform=None):
+    def __init__ (self, filelist, root_dir, transform=None):
         """
         Args:
-            true_file (string, list): Path to true file list or list
-            false_file (string, list): Path to false file list or list
+            filelist (string, list): Path to true file list or list
             root_dir (string) : Path to the dbson file
             transform (callable, optional) : Optional transform to be applied on a sample
         """
-        truelist = []
-        if isinstance (true, str):
-            with open (true, "r") as f:
-                truelist = f.readlines ()
-        elif isinstance (true, list):
-            truelist = true
+        allist = []
+        if isinstance (filelist, str):
+            with open (filelist, "r") as f:
+                allist = f.readlines ()
+        elif isinstance (filelist, list):
+            allist = filelist 
         else:
-            raise ValueError ("Expected either list or str, but got=", type(true))
-        ntrue = len(truelist)
-        falselist = []
-        if isinstance (false, str):
-            with open (false, "r") as f:
-                falselist = f.readlines ()
-        elif isinstance (false, list):
-            falselist = false
-        else:
-            raise ValueError ("Expected either list or str, but got=", type(false))
-        nfalse = len(falselist)
+            raise ValueError ("Expected either list or str, but got=", type(filelist))
+        self.n = len(filelist)
         #
-        self.filelist   = truelist + falselist
-        self.target     = ([1]*ntrue) + ([0]*nfalse)
-        self.n          = ntrue + nfalse
+        self.filelist   = allist
         self.root       = root_dir
         self.transform  = transform
 
@@ -142,7 +130,6 @@ class Element (Dataset):
             idx = idx.tolist ()
 
         ret = dict ()
-        ret['target'] = self.target[idx]
         fn,_ = os.path.splitext ( self.filelist[idx].strip() )
         with DBSON (os.path.join (self.root, "{0}.dbson".format(fn))) as dbs:
             bt    = np.array (dbs.bt, dtype=np.float32) / 255.
@@ -159,13 +146,64 @@ class Element (Dataset):
             ret['payload'] = self.transform (ret['payload'])
         return ret
 
-    def train_test_split (self, test_size=0.3, shuffle=True, stratify=True):
+    def train_test_split (self, test_size=0.3, shuffle=True,):
         """returns indices to split train/test"""
         d_i  = np.arange (self.n)
-        if stratify:
-            train_i, test_i = train_test_split (d_i, test_size=0.3, shuffle=shuffle, stratify=self.target)
-        else:
-            train_i, test_i = train_test_split (d_i, test_size=0.3, shuffle=shuffle)
+        train_i, test_i = train_test_split (d_i, test_size=0.3, shuffle=shuffle)
+        train_s         = SubsetRandomSampler (train_i)
+        test_s          = SubsetRandomSampler (test_i)
+        return train_s, test_s
+
+class NpyDataset (Dataset):
+    """
+    Element but interfaces with a numpy
+    file using memory maps 
+
+    Kind of assumed you are going to do with CAE
+    """
+    def __init__ (self, filedict, root_dir, transform=None):
+        """
+        Args:
+            filedict (dict) keys=filenames, values=number of triggers
+                This is badly needed because numpy memory maps dont 
+                carry any shape information
+            root_dir (string) path to the dataset
+            transform (callable, optional): Optional transform to be applied
+        """
+        self.ns = np.cumsum ([v for k,v in filedict.items()])
+        self.n = self.ns[-1]
+        self.fmap = dict()
+        mmdict = {'dtype':np.float32, 'mode':'r'}
+        ## open mmaps in strictly read mode
+        for k, v in filedict.items():
+            self.fmap[v] = np.memmap (k, shape=(v,2,32,32), **mmdict)
+
+
+    def __len__(self):
+        return self.n
+
+    def __getitem__ (self, idx):
+        """I guess this doesn't support list indexing"""
+        if torch.is_tensor (idx):
+            idx = idx.tolist ()
+        ret = dict ()
+        ridx = idx
+        for k,v in self.fmap.items():
+            if k <= ridx:
+                ridx = ridx - k
+                continue
+            if k > ridx:
+                ret['payload'] = v[ridx]
+        return ret
+
+        if self.transform:
+            ret['payload'] = self.transform (ret['payload'])
+        return ret
+
+    def train_test_split (self, test_size=0.3, shuffle=True,):
+        """returns indices to split train/test"""
+        d_i  = np.arange (self.n)
+        train_i, test_i = train_test_split (d_i, test_size=0.3, shuffle=shuffle)
         train_s         = SubsetRandomSampler (train_i)
         test_s          = SubsetRandomSampler (test_i)
         return train_s, test_s

@@ -191,7 +191,7 @@ class GomuGomu (nn.Module):
         x = F.relu (self.d3 (x))
         x = self.bn2 (x)
         x = F.relu (self.d2 (x))
-        x = F.relu (self.d1 (x))
+        x = self.d1 (x)
         x = t.sigmoid (x)
         return x
 
