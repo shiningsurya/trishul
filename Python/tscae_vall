@@ -19,7 +19,6 @@ def parse_args ():
     # add ('cnn', help='CNN model class.', choices=tdm.MODELS)
     # add ('it', help="Iteration index. defaults to latest.", default=None, type=int)
     # add ('params', help='Hyperparameters YAML file.', )
-    add ('--root-dir', help='Data root directory.', default="/home/vlite-master/surya/triggers/", dest='rdir')
     add ('--model-dir', help="Model save directory.", default='/home/vlite-master/surya/triggers/Models/', dest='mdir')
     add ('--ds-dir', help="Dataset directory.", default='/home/vlite-master/surya/trishul/Datasets/', dest='dsir')
     return ap.parse_args ()
@@ -27,22 +26,19 @@ def parse_args ():
 if __name__ == "__main__":
     args = parse_args ()
     # dataset
-    IIDX = "it004"
-    DDIR = os.path.join (args.rdir, IIDX)
-    lisf = "{0}_{1}.list"
-    TLIS = os.path.join (args.dsir, lisf.format (IIDX, "true"))
-    FLIS = os.path.join (args.dsir, lisf.format (IIDX, "false"))
-    DSet = tdu.NpyDataset ({'vall':818848}, args.dsir,)
-    train_l, val_l   = DSet.train_test_split ()
+    IIDX = "vall"
+    NPYFILE = "vall_btdd.npy"
+    DSet = tdu.NpyDataset (NPYFILE, tdu.NPYDICT[NPYFILE], args.dsir,)
+    train_l, val_l   = DSet.train_test_split (random_state=42)
     t_DataLoader     = tdu.DataLoader (DSet, sampler=train_l, batch_size=100, pin_memory=True)
     v_DataLoader     = tdu.DataLoader (DSet, sampler=val_l, batch_size=100,pin_memory=True)
     # cnn
     # CNN  = tdm.Byakugan (333)
     # CNN  = tdm.VGG11A (466).cuda()
-    CAE  = tdm.GomuGomu (200).cuda()
+    # CAE  = tdm.GomuGomu (700).cuda()
+    CAE  = tdm.BaraBara(idx=710)
     ## load
     if False:
-        IFILE = "/home/shining/work/trishul/Models/Byakugan_it004_129_state.pth"
         IFILE = "/home/shining/work/vlite/machine_learnings/gomugomu/GomuGomu_itaaa_100_state.pth"
         tdu.LoadModel (IFILE, CAE)
     ## load
@@ -60,21 +56,20 @@ if __name__ == "__main__":
     tEPC = tqdm (EPC, desc="Epochs", unit="epochs", total=num_epochs)
     for i in tEPC:
         # training
-        tmet = tdt.AETrainer (CAE, OPM, LFN, t_DataLoader, METS)
+        tmet = tdt.AETrainerNoCuda (CAE, OPM, LFN, t_DataLoader, METS)
         training_curve (tmet)
         # validation
-        vmet = tdt.AEEvaluator (CAE, LFN, v_DataLoader, METS)
+        vmet = tdt.AEEvaluatorNoCuda (CAE, LFN, v_DataLoader, METS)
         validation_curve (vmet)
+        # print
+        print ("Training   loss (log10)= ", np.log10(np.mean( tmet['loss'] )))
+        print ("Validation loss (log10)= ", np.log10(np.mean( vmet['loss'] )))
     # save metrics
     curves = [training_curve, validation_curve]
     try:
         tdu.WritePickle (curves, os.path.join(args.mdir, "{0}_curves.pkl".format(CAEID)))
     except:
         print ("[EE] Writing pickle.")
-    try:
-        tdu.PlotCurve (curves, os.path.join(args.mdir, "{0}_curves.pdf".format(CAEID)))
-    except:
-        print ("[EE] Plotting learning curves.")
     # dump model
     try:
         tdu.DumpModel (os.path.join (args.mdir, "{0}_state".format(CAEID)), CAE, OPM)
