@@ -249,7 +249,7 @@ class BaraBara (nn.Module):
     def decode (self, x):
         x = F.relu (self.cf1(x))
         x = F.relu (self.cf2(x))
-        x = x.view ([x.size(0), 8, 24, 24])
+        x = x.view ([-1, 8, 24, 24])
         x = F.relu (self.d3 (x))
         x = F.relu (self.d2 (x))
         x = self.bn2 (x)
