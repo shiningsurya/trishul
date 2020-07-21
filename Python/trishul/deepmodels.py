@@ -154,7 +154,7 @@ class GomuGomu (nn.Module):
     -> (4, 16, 16)
     (2, 64, 64)
     """
-    def __init__ (self, latent_dim=8, idx=100):
+    def __init__ (self, idx=100, latent_dim=8, ):
         super (GomuGomu, self).__init__ ()
         self.name = "GomuGomu"
         self.idx  = idx
