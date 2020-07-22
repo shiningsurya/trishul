@@ -160,6 +160,60 @@ class Element (Dataset):
         test_s          = SubsetRandomSampler (test_i)
         return train_s, test_s
 
+class NpyClfDatasets (Dataset):
+    """
+    Element but interfaces with multiple numpy
+    file using memory maps 
+
+    Kind of assumed you are going to do with CAE
+    """
+    def __init__ (self, trues, falses, root_dir='./', transform=None):
+        """
+        Args:
+            trues(tuple) (filename, shape)
+                This is badly needed because numpy memory maps dont 
+                carry any shape information
+            falses(tuple) (filename, shape)
+            root_dir (string) path to the dataset
+            transform (callable, optional): Optional transform to be applied
+        """
+        mmdict = {'dtype':np.float32, 'mode':'r'}
+        self.ntrue  = trues[1][0]
+        self.nfalse = falses[1][0]
+        self.n      = self.ntrue + self.nfalse
+        self.target = np.zeros (self.n, dtype=np.uint8)
+        self.target[:self.ntrue] = 1
+        self.truemap = np.memmap (os.path.join (root_dir, trues[0]), shape=trues[1], **mmdict)
+        self.falsemap = np.memmap (os.path.join (root_dir, falses[0]), shape=falses[1], **mmdict)
+        self.transform = transform
+
+
+    def __len__(self):
+        return self.n
+
+    def __getitem__ (self, idx):
+        """I guess this doesn't support list indexing"""
+        if torch.is_tensor (idx):
+            idx = idx.tolist ()
+        ret = dict ()
+        if idx < self.ntrue:
+            ret['payload'] = torch.Tensor (self.truemap[idx])
+            ret['target']  = 1
+        else:
+            ridx = idx - self.ntrue
+            ret['payload'] = torch.Tensor (self.falsemap[ridx])
+            ret['target']  = 0
+        if self.transform:
+            ret['payload'] = self.transform (ret['payload'])
+        return ret
+
+    def train_test_split (self, test_size=0.3, shuffle=True,random_state=None):
+        """returns indices to split train/test"""
+        d_i  = np.arange (self.n)
+        train_i, test_i = train_test_split (d_i, test_size=0.3, shuffle=shuffle, stratify=self.target, random_state=random_state)
+        train_s         = SubsetRandomSampler (train_i)
+        test_s          = SubsetRandomSampler (test_i)
+        return train_s, test_s
 class NpyDatasets (Dataset):
     """
     Element but interfaces with multiple numpy
