@@ -348,6 +348,71 @@ class YomiYomi(nn.Module):
         x = self.d1 (x, output_size=(x.size(0), 2, 32, 32))
         return x 
 
+class SoruSoru(nn.Module):
+    """
+    SoruSoru Convolutional Autoencoder
+
+    Input 
+    (2, 32, 32) 
+    -> (16, 16, 16) 
+    -> (32, 8,  8)
+    -> FC latent space <-
+    -> (, 16, 16)
+    (2, 32, 32)
+    """
+    def __init__ (self, idx=100, latent_dim=8, ):
+        super (SoruSoru, self).__init__ ()
+        self.name = "SoruSoru"
+        self.idx  = idx
+        self.input_shape = [2, 32, 32]
+        # encode 
+        self.c1  = nn.Conv2d (2, 16, kernel_size=2, stride=2)
+        self.c2  = nn.Conv2d (16, 32, kernel_size=2, stride=2)
+        self.c3  = nn.Conv2d (32, 64, kernel_size=2, stride=2)
+        ## reshape
+        self.before_fc = [64,4,4]
+        # lowest dim
+        self.fc1 = nn.Linear (1024, 64)
+        self.fc2 = nn.Linear (64, latent_dim)
+        self.cf2 = nn.Linear (latent_dim, 64)
+        self.cf1 = nn.Linear (64, 1024)
+        # decode
+        self.d3  = nn.ConvTranspose2d (64, 32, kernel_size=2, stride=2, output_padding=0,)
+        self.d2  = nn.ConvTranspose2d (32, 16, kernel_size=2, stride=2, output_padding=0)
+        self.d1  = nn.ConvTranspose2d (16, 2, kernel_size=2, stride=2)
+        ##
+
+    def encode (self, x):
+        x = F.relu (self.c1 (x))
+        x = F.relu (self.c2 (x))
+        x = F.relu (self.c3 (x))
+        x = x.view([x.size(0), -1])
+        x = F.relu (self.fc1 (x))
+        x = F.relu (self.fc2 (x))
+        return x
+
+    
+    def decode (self, x):
+        x = F.relu (self.cf2(x))
+        x = F.relu (self.cf1(x))
+        x = x.view ([-1, 64, 4, 4])
+        x = F.relu (self.d3 (x))
+        x = F.relu (self.d2 (x))
+        x = self.d1 (x)
+        x = t.sigmoid (x)
+        return x
+
+    def forward (self, x):
+        c = self.encode (x)
+        y = self.decode (c)
+        return y,c
+
+    def decode_conv (self, x):
+        x = F.relu (self.d3 (x))
+        x = F.relu (self.d2 (x))
+        x = self.d1 (x, output_size=(x.size(0), 2, 32, 32))
+        return x 
+
 class SenbonSakura (nn.Module):
     """
     The classifier taking code
