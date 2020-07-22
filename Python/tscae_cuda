@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.7
 import os
 import numpy as np
 from tqdm import tqdm
@@ -26,35 +26,35 @@ def parse_args ():
 
 if __name__ == "__main__":
     args = parse_args ()
+    print (args)
     # dataset
-    IIDX = "it004"
-    DDIR = os.path.join (args.rdir, IIDX)
-    lisf = "{0}_{1}.list"
-    TLIS = os.path.join (args.dsir, lisf.format (IIDX, "true"))
-    FLIS = os.path.join (args.dsir, lisf.format (IIDX, "false"))
-    DSet = tdu.Element (TLIS, FLIS, args.dsir)
+    IIDX = "i_wn"
+    LIS  = "./injected_wn.dblist"
+    DSet = tdu.Element (LIS)
+    print (DSet.n)
     train_l, val_l   = DSet.train_test_split ()
-    t_DataLoader     = tdu.DataLoader (DSet, sampler=train_l, batch_size=1, pin_memory=True)
-    v_DataLoader     = tdu.DataLoader (DSet, sampler=val_l, pin_memory=True)
+    t_DataLoader     = tdu.DataLoader (DSet, sampler=train_l, batch_size=100, pin_memory=True, num_workers=2)
+    v_DataLoader     = tdu.DataLoader (DSet, sampler=val_l, pin_memory=True, batch_size=10,num_workers=2)
     # cnn
     # CNN  = tdm.Byakugan (333)
     # CNN  = tdm.VGG11A (466).cuda()
-    CAE  = tdm.GomuGomu (155).cuda()
+    CAE  = tdm.GomuGomu (idx=550).cuda()
     ## load
     if False:
-        IFILE = "/home/shining/work/trishul/Models/Byakugan_it004_129_state.pth"
+        IFILE = "/home/shining/mega/machine_learnings/hirahira/GomuGomu_i_wn_552_state.pth"
         tdu.LoadModel (IFILE, CAE)
     ## load
+    CAE.idx = 553
     CAEID= "{0}_{1}_{2}".format(CAE.name, IIDX, CAE.idx)
-    LFN  = tn.MSELoss ()
+    LFN  = tn.MSELoss (reduction='mean')
     OPM  = to.Adam (CAE.parameters(), lr=1e-3)
     # metrics
     # METS = {'recall':tdu.Recall_score, 'precision':tdu.Precision_score}
     METS = {}
-    training_curve    = tdu.Curve (METS.keys(),epoch=0, type_="training")
-    validation_curve  = tdu.Curve (METS.keys(),epoch=0,  type_="validation")
+    training_curve    = tdu.Curve (METS.keys(),epoch=70, type_="training")
+    validation_curve  = tdu.Curve (METS.keys(),epoch=70,  type_="validation")
     # train
-    num_epochs = 10
+    num_epochs = 20
     EPC  = np.arange (num_epochs)
     tEPC = tqdm (EPC, desc="Epochs", unit="epochs", total=num_epochs)
     for i in tEPC:
@@ -64,9 +64,11 @@ if __name__ == "__main__":
         # validation
         vmet = tdt.AEEvaluator (CAE, LFN, v_DataLoader, METS)
         validation_curve (vmet)
+        # print
+        print ("Training   error = ", np.log10( np.mean(tmet['loss']) ))
+        print ("Validation error = ", np.log10( np.mean(vmet['loss']) ))
     # save metrics
-    # curves = [training_curve, validation_curve]
-    curves = []
+    curves = [training_curve, validation_curve]
     try:
         tdu.WritePickle (curves, os.path.join(args.mdir, "{0}_curves.pkl".format(CAEID)))
     except:

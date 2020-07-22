@@ -101,7 +101,7 @@ class Element (Dataset):
     Shape = (2, 64, 64)
     First channel for Bowtie, second channel for de-dispersed filterbank
     """
-    def __init__ (self, filelist, root_dir, transform=None):
+    def __init__ (self, filelist, root_dir='', transform=None):
         """
         Args:
             filelist (string, list): Path to true file list or list
@@ -116,7 +116,7 @@ class Element (Dataset):
             allist = filelist 
         else:
             raise ValueError ("Expected either list or str, but got=", type(filelist))
-        self.n = len(filelist)
+        self.n = len(allist)
         #
         self.filelist   = allist
         self.root       = root_dir
