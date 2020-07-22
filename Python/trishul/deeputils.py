@@ -21,6 +21,12 @@ import torchvision.transforms as tvt
 # trishul imports
 from .dbson         import DBSON 
 
+NPYDICT = {
+        'vall_btdd.npy':         (818848,2,32,32),
+        'whitenoise_btdd.npy':   (9717,2,32,32),
+        'faketrue_btdd.npy':     (8480,2,32,32),
+}
+
 class BTElement (Dataset):
     """
     DBSON element dataset.
@@ -154,14 +160,14 @@ class Element (Dataset):
         test_s          = SubsetRandomSampler (test_i)
         return train_s, test_s
 
-class NpyDataset (Dataset):
+class NpyDatasets (Dataset):
     """
-    Element but interfaces with a numpy
+    Element but interfaces with multiple numpy
     file using memory maps 
 
     Kind of assumed you are going to do with CAE
     """
-    def __init__ (self, filedict, root_dir, transform=None):
+    def __init__ (self, filedict, root_dir='./', transform=None):
         """
         Args:
             filedict (dict) keys=filenames, values=number of triggers
@@ -170,13 +176,15 @@ class NpyDataset (Dataset):
             root_dir (string) path to the dataset
             transform (callable, optional): Optional transform to be applied
         """
-        self.ns = np.cumsum ([v for k,v in filedict.items()])
-        self.n = self.ns[-1]
         self.fmap = dict()
         mmdict = {'dtype':np.float32, 'mode':'r'}
+        self.n = 0
         ## open mmaps in strictly read mode
         for k, v in filedict.items():
-            self.fmap[v] = np.memmap (k, shape=(v,2,32,32), **mmdict)
+            self.fmap[v[0]] = np.memmap (os.path.join(root_dir, k), shape=v, **mmdict)
+            self.n += v[0]
+        self.fns = list (filedict.keys())
+        self.transform = transform
 
 
     def __len__(self):
@@ -188,13 +196,16 @@ class NpyDataset (Dataset):
             idx = idx.tolist ()
         ret = dict ()
         ridx = idx
+        fidx = 0
         for k,v in self.fmap.items():
             if k <= ridx:
                 ridx = ridx - k
+                fidx = fidx + 1
                 continue
             if k > ridx:
-                ret['payload'] = v[ridx]
-        return ret
+                ret['payload'] = torch.from_numpy( v[ridx] )
+                ret['source']  = os.path.basename(v.filename)
+                break
 
         if self.transform:
             ret['payload'] = self.transform (ret['payload'])
@@ -208,6 +219,49 @@ class NpyDataset (Dataset):
         test_s          = SubsetRandomSampler (test_i)
         return train_s, test_s
 
+class NpyDataset (Dataset):
+    """
+    Element but interfaces with a numpy
+    file using memory maps 
+
+    Kind of assumed you are going to do with CAE
+    Kind of also assumes you are going to do only one npy file
+    """
+    def __init__ (self, mfile, mshape, root_dir='./',transform=None):
+        """
+        Args:
+            mfile (str): path of npy file
+            mshape (tuple) : (_, 2, 32, 32)
+            transform (callable, optional): Optional transform to be applied
+        """
+        self.fmap = np.memmap (
+                os.path.join (root_dir,mfile),
+                dtype=np.float32, mode='r', shape=mshape)
+        self.n = mshape[0]
+        self.transform = transform
+
+    def __len__(self):
+        return self.n
+
+    def __getitem__ (self, idx):
+        """supports list indexing"""
+        if torch.is_tensor (idx):
+            idx = idx.tolist ()
+        ret = dict ()
+        ret['payload'] = torch.from_numpy (self.fmap[idx])
+
+        if self.transform:
+            ret['payload'] = self.transform (ret['payload'])
+        return ret
+
+    def train_test_split (self, test_size=0.3, shuffle=True,random_state=None):
+        """returns indices to split train/test"""
+        d_i  = np.arange (self.n, dtype=np.uint32)
+        train_i, test_i = train_test_split (d_i, test_size=0.3, shuffle=shuffle, random_state=random_state)
+        train_s         = SubsetRandomSampler (train_i)
+        test_s          = SubsetRandomSampler (test_i)
+        return train_s, test_s
+    
 class StratifiedSampler (Sampler):
     """StratifiedSampler for BTElement"""
     

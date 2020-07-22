@@ -154,25 +154,26 @@ class GomuGomu (nn.Module):
     -> (4, 16, 16)
     (2, 64, 64)
     """
-    def __init__ (self, latent_dim=16, idx=100):
+    def __init__ (self, idx=100, latent_dim=8, ):
         super (GomuGomu, self).__init__ ()
         self.name = "GomuGomu"
         self.idx  = idx
         # encode 
         self.c1  = nn.Conv2d (2, 6, kernel_size=3)
-        self.c2  = nn.Conv2d (6, 8, kernel_size=5, stride=3)
-        self.bn1 = nn.BatchNorm2d (8)
-        self.c3  = nn.Conv2d (8, 10, kernel_size=5, stride=5)
+        self.c2  = nn.Conv2d (6, 8, kernel_size=3,)
+        self.bn1 = nn.MaxPool2d (3,)
+        self.c3  = nn.Conv2d (8, 10, kernel_size=3,)
         ## reshape
-        self.before_fc1 = [10,4,4]
+        self.before_fc = [10,7,7]
         # lowest dim
-        self.fc1 = nn.Linear (160, latent_dim)
-        self.fc2 = nn.Linear (latent_dim, 160)
+        self.fc1 = nn.Linear (490, 32)
+        self.fc2 = nn.Linear (32, latent_dim)
+        self.cf2 = nn.Linear (latent_dim, 64)
+        self.cf1 = nn.Linear (64, 507)
         # decode
-        self.d3  = nn.ConvTranspose2d (10, 8, kernel_size=5, stride=5, output_padding=0)
-        self.bn2 = nn.BatchNorm2d (8)
-        self.d2  = nn.ConvTranspose2d (8, 6, kernel_size=5, stride=3,output_padding=0)
-        self.d1  = nn.ConvTranspose2d (6, 2, kernel_size=3)
+        self.d3  = nn.ConvTranspose2d (3, 6, kernel_size=3, stride=2, output_padding=1,)
+        self.d2  = nn.ConvTranspose2d (6, 4, kernel_size=3, stride=1, output_padding=0)
+        self.d1  = nn.ConvTranspose2d (4, 2, kernel_size=3, stride=1)
         ##
 
     def encode (self, x):
@@ -182,17 +183,99 @@ class GomuGomu (nn.Module):
         x = F.relu (self.c3 (x))
         x = x.view([x.size(0), -1])
         x = F.relu (self.fc1 (x))
+        x = F.relu (self.fc2 (x))
         # 160
         return x
     
     def decode (self, x):
-        x = F.relu (self.fc2(x))
-        x = x.view ([x.size(0), 10, 4, 4])
+        x = F.relu (self.cf2(x))
+        x = F.relu (self.cf1(x))
+        x = x.view ([-1, 3, 13, 13])
         x = F.relu (self.d3 (x))
-        x = self.bn2 (x)
         x = F.relu (self.d2 (x))
         x = self.d1 (x)
         x = t.sigmoid (x)
+        return x
+
+    def forward (self, x):
+        c = self.encode (x)
+        y = self.decode (c)
+        return y,c
+
+    def decode_conv (self, x):
+        print (x.shape)
+        x = F.relu (self.d3 (x))
+        print (x.shape)
+        x = F.relu (self.d2 (x))
+        print (x.shape)
+        x = self.d1 (x)
+        return x 
+
+class BaraBara (nn.Module):
+    """
+    A bit higher depth than GomuGomu
+
+    Input 
+    (2, 32, 32) 
+    -> (4, 16, 16) 
+    -> (8, 4,  4)
+    -> FC latent space <-
+    -> (4, 16, 16)
+    (2, 32, 32)
+    """
+    def __init__ (self, latent_dim=8, idx=100):
+        super (BaraBara, self).__init__ ()
+        self.name = "BaraBara"
+        self.idx  = idx
+        # encode 
+        self.c1  = nn.Conv2d (2, 6, kernel_size=3)
+        self.c2  = nn.Conv2d (6, 8, kernel_size=3,)
+        self.bn1 = nn.BatchNorm2d (8)
+        self.c3  = nn.Conv2d (8, latent_dim, kernel_size=5, stride=1)
+        ## reshape
+        self.before_fc1 = [8,24,24]
+        # lowest dim
+        self.fc1 = nn.Linear (4608, 512)
+        self.fc2 = nn.Linear (512, latent_dim)
+        self.cf1 = nn.Linear (latent_dim, 512)
+        self.cf2 = nn.Linear (512, 4608)
+        # decode
+        self.d3  = nn.ConvTranspose2d (latent_dim, 8, kernel_size=3, stride=1, output_padding=0)
+        self.d2  = nn.ConvTranspose2d (8, 6, kernel_size=3, output_padding=0)
+        self.bn2 = nn.BatchNorm2d (6)
+        self.d1  = nn.ConvTranspose2d (6, 2, kernel_size=5)
+        ##
+
+    def encode (self, x):
+        x = F.relu (self.c1 (x))
+        x = F.relu (self.c2 (x))
+        x = self.bn1 (x)
+        x = F.relu (self.c3 (x))
+        x = x.view([x.size(0), -1])
+        x = F.relu (self.fc1 (x))
+        x = t.sigmoid (self.fc2 (x))
+        # 160
+        return x
+    
+    def decode (self, x):
+        x = F.relu (self.cf1(x))
+        x = F.relu (self.cf2(x))
+        x = x.view ([x.size(0), 8, 24, 24])
+        x = F.relu (self.d3 (x))
+        x = F.relu (self.d2 (x))
+        x = self.bn2 (x)
+        x = self.d1 (x)
+        x = t.sigmoid (x)
+        return x
+
+    def decode_conv(self, x):
+        print ('input.shape=', x.shape)
+        x = F.relu (self.d3 (x))
+        x = F.relu (self.d2 (x))
+        x = self.bn2 (x)
+        x = self.d1 (x)
+        x = t.sigmoid (x)
+        print ('output.shape=', x.shape)
         return x
 
     def forward (self, x):
