@@ -463,6 +463,56 @@ class YareYare(nn.Module):
         y = self.decode (c)
         return y,c
 
+class OiOi(nn.Module):
+    """
+    OiOi Convolutional Autoencoder
+
+    Input 
+    (2, 32, 32) 
+    -> (8, 16, 16) 
+    -> (16, 8,  8)
+    -> FC latent space <-
+    -> (16, 8, 8)
+    (2, 32, 32)
+    """
+    def __init__ (self, idx=100, latent_dim=8, ):
+        super (OiOi, self).__init__ ()
+        self.name = "OiOi"
+        self.idx  = idx
+        self.input_shape = [2, 32, 32]
+        # encode 
+        self.c1  = nn.Conv2d (2, 4, kernel_size=2, stride=2)
+        self.c2  = nn.Conv2d (4, 6, kernel_size=2, stride=2)
+        ## reshape
+        self.before_fc = [6,8,8]
+        # lowest dim
+        self.fc1 = nn.Linear (384, latent_dim)
+        self.cf1 = nn.Linear (latent_dim, 384)
+        # decode
+        self.d2  = nn.ConvTranspose2d (6, 4, kernel_size=2, stride=2, output_padding=0,)
+        self.d1  = nn.ConvTranspose2d (4, 2, kernel_size=2, stride=2, output_padding=0)
+        ##
+
+    def encode (self, x):
+        x = F.relu (self.c1 (x))
+        x = F.relu (self.c2 (x))
+        x = x.view([x.size(0), -1])
+        x = F.relu (self.fc1 (x))
+        return x
+
+    def decode (self, x):
+        x = F.relu (self.cf1(x))
+        x = x.view ([-1, 6, 8, 8])
+        x = F.relu (self.d2 (x))
+        x = self.d1 (x)
+        x = t.sigmoid (x)
+        return x
+
+    def forward (self, x):
+        c = self.encode (x)
+        y = self.decode (c)
+        return y,c
+
 class SenbonSakura (nn.Module):
     """
     The classifier taking code
