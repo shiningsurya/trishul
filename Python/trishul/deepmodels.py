@@ -283,57 +283,115 @@ class BaraBara (nn.Module):
         y = self.decode (c)
         return y,c
 
-class HiraHira(nn.Module):
+class YomiYomi(nn.Module):
     """
-    HiraHira Convolutional Autoencoder
-
-    Expects input is (uint8 - 128)
-    Ouput is sigmoid followed by scaling to 
+    YomiYomi Convolutional Autoencoder
 
     Input 
-    (2, 64, 64) 
-    -> (4, 16, 16) 
-    -> (8, 4,  4)
+    (2, 32, 32) 
+    -> (16, 16, 16) 
+    -> (32, 8,  8)
     -> FC latent space <-
-    -> (4, 16, 16)
-    (2, 64, 64)
+    -> (, 16, 16)
+    (2, 32, 32)
     """
-    def __init__ (self, latent_dim=16, idx=100):
-        super (GomuGomu, self).__init__ ()
-        self.name = "GomuGomu"
+    def __init__ (self, idx=100, latent_dim=8, ):
+        super (YomiYomi, self).__init__ ()
+        self.name = "YomiYomi"
         self.idx  = idx
+        self.input_shape = [2, 32, 32]
         # encode 
-        self.c1  = nn.Conv2d (2, 6, kernel_size=3)
-        self.c2  = nn.Conv2d (6, 8, kernel_size=5, stride=3)
-        self.bn1 = nn.BatchNorm2d (8)
-        self.c3  = nn.Conv2d (8, 10, kernel_size=5, stride=5)
+        self.c1  = nn.Conv2d (2, 8, kernel_size=3, stride=2)
+        self.c2  = nn.Conv2d (8, 16, kernel_size=3, stride=2)
+        self.c3  = nn.Conv2d (16, 32, kernel_size=3, stride=2)
         ## reshape
-        self.before_fc1 = [10,4,4]
+        self.before_fc = [32,3,3]
         # lowest dim
-        self.fc1 = nn.Linear (160, latent_dim)
-        self.fc2 = nn.Linear (latent_dim, 160)
+        self.fc1 = nn.Linear (288, 32)
+        self.fc2 = nn.Linear (32, latent_dim)
+        self.cf2 = nn.Linear (latent_dim, 32)
+        self.cf1 = nn.Linear (32, 288)
         # decode
-        self.d3  = nn.ConvTranspose2d (10, 8, kernel_size=5, stride=5, output_padding=0)
-        self.bn2 = nn.BatchNorm2d (8)
-        self.d2  = nn.ConvTranspose2d (8, 6, kernel_size=5, stride=3,output_padding=0)
-        self.d1  = nn.ConvTranspose2d (6, 2, kernel_size=3)
-        ##
-
+        self.d3  = nn.ConvTranspose2d (32, 16, kernel_size=3, stride=2, output_padding=0,)
+        self.d2  = nn.ConvTranspose2d (16, 8, kernel_size=3, stride=2, output_padding=0)
+        self.d1  = nn.ConvTranspose2d (8, 2, kernel_size=3, stride=2)
     def encode (self, x):
         x = F.relu (self.c1 (x))
         x = F.relu (self.c2 (x))
-        x = self.bn1 (x)
         x = F.relu (self.c3 (x))
         x = x.view([x.size(0), -1])
-        x = t.sigmoid (self.fc1 (x))
-        # 160
+        x = F.relu (self.fc1 (x))
+        x = F.relu (self.fc2 (x))
         return x
     
     def decode (self, x):
-        x = F.relu (self.fc2(x))
-        x = x.view ([x.size(0), 10, 4, 4])
+        x = F.relu (self.cf2(x))
+        x = F.relu (self.cf1(x))
+        x = x.view ([-1, 32, 3, 3])
         x = F.relu (self.d3 (x))
-        x = self.bn2 (x)
+        x = F.relu (self.d2 (x))
+        x = self.d1 (x, output_size=(x.size(0), 2, 32, 32))
+        x = t.sigmoid (x)
+        return x
+
+    def forward (self, x):
+        c = self.encode (x)
+        y = self.decode (c)
+        return y,c
+
+    def decode_conv (self, x):
+        x = F.relu (self.d3 (x))
+        x = F.relu (self.d2 (x))
+        x = self.d1 (x, output_size=(x.size(0), 2, 32, 32))
+        return x 
+
+class SoruSoru(nn.Module):
+    """
+    SoruSoru Convolutional Autoencoder
+
+    Input 
+    (2, 32, 32) 
+    -> (16, 16, 16) 
+    -> (32, 8,  8)
+    -> FC latent space <-
+    -> (, 16, 16)
+    (2, 32, 32)
+    """
+    def __init__ (self, idx=100, latent_dim=8, ):
+        super (SoruSoru, self).__init__ ()
+        self.name = "SoruSoru"
+        self.idx  = idx
+        self.input_shape = [2, 32, 32]
+        # encode 
+        self.c1  = nn.Conv2d (2, 16, kernel_size=2, stride=2)
+        self.c2  = nn.Conv2d (16, 32, kernel_size=2, stride=2)
+        self.c3  = nn.Conv2d (32, 64, kernel_size=2, stride=2)
+        ## reshape
+        self.before_fc = [64,4,4]
+        # lowest dim
+        self.fc1 = nn.Linear (1024, 64)
+        self.fc2 = nn.Linear (64, latent_dim)
+        self.cf2 = nn.Linear (latent_dim, 64)
+        self.cf1 = nn.Linear (64, 1024)
+        # decode
+        self.d3  = nn.ConvTranspose2d (64, 32, kernel_size=2, stride=2, output_padding=0,)
+        self.d2  = nn.ConvTranspose2d (32, 16, kernel_size=2, stride=2, output_padding=0)
+        self.d1  = nn.ConvTranspose2d (16, 2, kernel_size=2, stride=2)
+        ##
+    def encode (self, x):
+        x = F.relu (self.c1 (x))
+        x = F.relu (self.c2 (x))
+        x = F.relu (self.c3 (x))
+        x = x.view([x.size(0), -1])
+        x = F.relu (self.fc1 (x))
+        x = t.sigmoid (self.fc2 (x))
+        return x
+
+    def decode (self, x):
+        x = F.relu (self.cf2(x))
+        x = F.relu (self.cf1(x))
+        x = x.view ([-1, 64, 4, 4])
+        x = F.relu (self.d3 (x))
         x = F.relu (self.d2 (x))
         x = self.d1 (x)
         x = t.sigmoid (x)
@@ -344,3 +402,128 @@ class HiraHira(nn.Module):
         y = self.decode (c)
         return y,c
 
+    def decode_conv (self, x):
+        x = F.relu (self.d3 (x))
+        x = F.relu (self.d2 (x))
+        x = self.d1 (x, output_size=(x.size(0), 2, 32, 32))
+        return x 
+
+class YareYare(nn.Module):
+    """
+    YareYare Convolutional Autoencoder
+
+    Input 
+    (2, 32, 32) 
+    -> (8, 16, 16) 
+    -> (16, 8,  8)
+    -> FC latent space <-
+    -> (16, 8, 8)
+    (2, 32, 32)
+    """
+    def __init__ (self, idx=100, latent_dim=8, ):
+        super (YareYare, self).__init__ ()
+        self.name = "YareYare"
+        self.idx  = idx
+        self.input_shape = [2, 32, 32]
+        # encode 
+        self.c1  = nn.Conv2d (2, 8, kernel_size=2, stride=2)
+        self.c2  = nn.Conv2d (8, 16, kernel_size=2, stride=2)
+        ## reshape
+        self.before_fc = [16,8,8]
+        # lowest dim
+        self.fc1 = nn.Linear (1024, latent_dim)
+        self.cf1 = nn.Linear (latent_dim, 1024)
+        # decode
+        self.d2  = nn.ConvTranspose2d (16, 8, kernel_size=2, stride=2, output_padding=0,)
+        self.d1  = nn.ConvTranspose2d (8, 2, kernel_size=2, stride=2, output_padding=0)
+        ##
+
+    def encode (self, x):
+        x = F.relu (self.c1 (x))
+        x = F.relu (self.c2 (x))
+        x = x.view([x.size(0), -1])
+        x = t.sigmoid (self.fc1 (x))
+        return x
+
+    def decode (self, x):
+        x = F.relu (self.cf1(x))
+        x = x.view ([-1, 16, 8, 8])
+        x = F.relu (self.d2 (x))
+        x = self.d1 (x)
+        x = t.sigmoid (x)
+        return x
+
+    def forward (self, x):
+        c = self.encode (x)
+        y = self.decode (c)
+        return y,c
+
+class OiOi(nn.Module):
+    """
+    OiOi Convolutional Autoencoder
+
+    Input 
+    (2, 32, 32) 
+    -> (4, 16, 16) 
+    -> (6, 8,  8)
+    -> FC latent space <-
+    -> (6, 8, 8)
+    -> (4, 16,16)
+    (2, 32, 32)
+    """
+    def __init__ (self, idx=100, latent_dim=8, ):
+        super (OiOi, self).__init__ ()
+        self.name = "OiOi"
+        self.idx  = idx
+        self.input_shape = [2, 32, 32]
+        # encode 
+        self.c1  = nn.Conv2d (2, 4, kernel_size=2, stride=2)
+        self.c2  = nn.Conv2d (4, 6, kernel_size=2, stride=2)
+        ## reshape
+        self.before_fc = [6,8,8]
+        # lowest dim
+        self.fc1 = nn.Linear (384, latent_dim)
+        self.cf1 = nn.Linear (latent_dim, 384)
+        # decode
+        self.d2  = nn.ConvTranspose2d (6, 4, kernel_size=2, stride=2, output_padding=0,)
+        self.d1  = nn.ConvTranspose2d (4, 2, kernel_size=2, stride=2, output_padding=0)
+        ##
+
+    def encode (self, x):
+        x = F.relu (self.c1 (x))
+        x = F.relu (self.c2 (x))
+        x = x.view([x.size(0), -1])
+        x = t.sigmoid (self.fc1 (x))
+        return x
+
+    def decode (self, x):
+        x = F.relu (self.cf1(x))
+        x = x.view ([-1, 6, 8, 8])
+        x = F.relu (self.d2 (x))
+        x = self.d1 (x)
+        x = t.sigmoid (x)
+        return x
+
+    def forward (self, x):
+        c = self.encode (x)
+        y = self.decode (c)
+        return y,c
+
+class SenbonSakura (nn.Module):
+    """
+    The classifier taking code
+    """
+    def __init__ (self, idx=60, nin=8, num_classes=2):
+        super (SenbonSakura, self).__init__()
+        self.name = "SenbonSakura"
+        self.idx  = idx
+        self.clf = nn.Sequential (
+            nn.Linear (nin, 4),
+            nn.ReLU (True),
+            nn.Linear (4, 2),
+            nn.Sigmoid()
+        )
+
+    def forward (self, x):
+        x = self.clf (x)
+        return x
