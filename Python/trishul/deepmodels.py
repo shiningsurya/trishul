@@ -381,17 +381,15 @@ class SoruSoru(nn.Module):
         self.d2  = nn.ConvTranspose2d (32, 16, kernel_size=2, stride=2, output_padding=0)
         self.d1  = nn.ConvTranspose2d (16, 2, kernel_size=2, stride=2)
         ##
-
     def encode (self, x):
         x = F.relu (self.c1 (x))
         x = F.relu (self.c2 (x))
         x = F.relu (self.c3 (x))
         x = x.view([x.size(0), -1])
         x = F.relu (self.fc1 (x))
-        x = F.relu (self.fc2 (x))
+        x = t.sigmoid (self.fc2 (x))
         return x
 
-    
     def decode (self, x):
         x = F.relu (self.cf2(x))
         x = F.relu (self.cf1(x))
@@ -447,7 +445,7 @@ class YareYare(nn.Module):
         x = F.relu (self.c1 (x))
         x = F.relu (self.c2 (x))
         x = x.view([x.size(0), -1])
-        x = F.relu (self.fc1 (x))
+        x = t.sigmoid (self.fc1 (x))
         return x
 
     def decode (self, x):
@@ -469,10 +467,11 @@ class OiOi(nn.Module):
 
     Input 
     (2, 32, 32) 
-    -> (8, 16, 16) 
-    -> (16, 8,  8)
+    -> (4, 16, 16) 
+    -> (6, 8,  8)
     -> FC latent space <-
-    -> (16, 8, 8)
+    -> (6, 8, 8)
+    -> (4, 16,16)
     (2, 32, 32)
     """
     def __init__ (self, idx=100, latent_dim=8, ):
@@ -497,7 +496,7 @@ class OiOi(nn.Module):
         x = F.relu (self.c1 (x))
         x = F.relu (self.c2 (x))
         x = x.view([x.size(0), -1])
-        x = F.relu (self.fc1 (x))
+        x = t.sigmoid (self.fc1 (x))
         return x
 
     def decode (self, x):
@@ -519,10 +518,11 @@ class SenbonSakura (nn.Module):
     """
     def __init__ (self, idx=60, nin=8, num_classes=2):
         super (SenbonSakura, self).__init__()
+        self.name = "SenbonSakura"
+        self.idx  = idx
         self.clf = nn.Sequential (
             nn.Linear (nin, 4),
             nn.ReLU (True),
-            nn.Dropout (), 
             nn.Linear (4, 2),
             nn.Sigmoid()
         )
