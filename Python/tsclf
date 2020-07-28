@@ -1,0 +1,74 @@
+#!/usr/bin/env python3.7
+import os
+import numpy as np
+from tqdm import tqdm
+# trishul imports
+import trishul.deeputils   as tdu
+import trishul.deepmodels  as tdm
+import trishul.deeptrainer as tdt
+# torch imports
+import torch       as t
+import torch.nn    as tn
+import torch.optim as to
+
+
+def parse_args ():
+    import argparse
+    ap = argparse.ArgumentParser(prog='tsclf', description='Trishul tool for classifier.', epilog='Part of Trishul')
+    add = ap.add_argument
+    # add ('cnn', help='CNN model class.', choices=tdm.MODELS)
+    # add ('it', help="Iteration index. defaults to latest.", default=None, type=int)
+    # add ('params', help='Hyperparameters YAML file.', )
+    add ('--root-dir', help='Data root directory.', default="/home/vlite-master/surya/triggers/", dest='rdir')
+    add ('--model-dir', help="Model save directory.", default='/home/vlite-master/surya/triggers/Models/', dest='mdir')
+    add ('--ds-dir', help="Dataset directory.", default='/home/vlite-master/surya/trishul/Datasets/', dest='dsir')
+    return ap.parse_args ()
+
+if __name__ == "__main__":
+    args = parse_args ()
+    IIDX = "clf"
+    TRUES = ["faketrue_btdd.npy","vall_psr_btdd.npy"]
+    # FALSES = ["vall_rfi_btdd.npy", "vall_dm150_rfi_btdd.npy","whitenoise_btdd.npy"]
+    FALSES = ["vall_rfi_btdd.npy", "vall_dm150_rfi_btdd.npy"]
+    DSet = tdu.NpyClfDatasets (TRUES, FALSES, args.dsir,)
+    # train_l, val_l   = DSet.train_test_split (random_state=42, test_size=0.2)
+    # a_DataLoader     = tdu.DataLoader (DSet, batch_size=1, pin_memory=True)
+    # v_DataLoader     = tdu.DataLoader (DSet, sampler=val_l,   batch_size=1, pin_memory=True)
+    v_DataLoader     = tdu.DataLoader (DSet, batch_size=10, pin_memory=True)
+    # cnn
+    # CNN  = tdm.Byakugan (333)
+    # CNN  = tdm.YomiYomi(idx=466).cuda()
+    CNN  = tdm.SoruSoru(idx=110)
+    CLF  = tdm.Zanka(idx=49)
+    ## load CAE
+    if True:
+        IFILE = "/home/shining/wtf/trishul/Models/SoruSoru_vall_110_state.pth"
+        IFILE_CLF = "/home/shining/mega/machine_learnings/zanka/Zanka_trainclf_210_state.pth"
+        tdu.LoadModel (IFILE, CNN)
+        tdu.LoadModel (IFILE_CLF, CLF)
+    ## load
+    CNN.eval()
+    CLFID= "{0}_{1}_{2}".format(CLF.name, IIDX, CLF.idx)
+    LFN  = tn.BCELoss()
+    # metrics
+    METS = {'recall':tdu.Recall_score, 'precision':tdu.Precision_score}
+    validation_curve  = tdu.Curve (METS.keys(),epoch=0,  type_="validation")
+    # run
+    vmet = tdt.AECLFEvaluatorNoCuda (CNN, CLF, LFN, v_DataLoader, METS)
+    validation_curve (vmet)
+    # print
+    print ("Validation loss (log10)= ", np.log10(np.mean( vmet['loss'] )))
+    print ("Recall                 = ", vmet['recall']() )
+    print ("Precision              = ", vmet['precision']() )
+    print (vmet['recall'])
+    # save metrics
+    curves = [validation_curve]
+    try:
+        tdu.WritePickle (curves, os.path.join(args.mdir, "{0}_curves.pkl".format(CLFID)))
+    except:
+        print ("[EE] Writing pickle.")
+    try:
+        tdu.PlotCurve (curves, os.path.join(args.mdir, "{0}_curves.pdf".format(CLFID)))
+    except:
+        print ("[EE] Plotting learning curves.")
+
