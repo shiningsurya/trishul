@@ -22,10 +22,30 @@ import torchvision.transforms as tvt
 from .dbson         import DBSON 
 
 NPYDICT = {
-        'vall_btdd.npy':         (818848,2,32,32),
-        'whitenoise_btdd.npy':   (9717,2,32,32),
-        'faketrue_btdd.npy':     (8480,2,32,32),
+        'vall_btdd.npy':                   (818848,2,32,32),
+        'whitenoise_btdd.npy':             (9717  ,2,32,32),
+        'faketrue_btdd.npy':               (8480  ,2,32,32),
+        'vall_psr_btdd.npy':               (23574 ,2,32,32),
+        'vall_rfi_btdd.npy':               (8207  ,2,32,32),
+        'vall_dm150_rfi_btdd.npy':         (20660 ,2,32,32),
 }
+"""
+True.FAKETRUE     =    8480
+True.PSR          =   23574
+True              =   32054
+---
+False.RFI         =    8207
+False.DM150       =   20660
+False             =   28867
+---
+ALL               =  818848
+
+ATTN:
+    For all the classifier tasks, 
+    a two element array is used for each target
+    -- First element  is TRUE
+    -- Second element is FALSE
+"""
 
 class BTElement (Dataset):
     """
@@ -160,33 +180,63 @@ class Element (Dataset):
         test_s          = SubsetRandomSampler (test_i)
         return train_s, test_s
 
+class NpyElement (object):
+    """
+    Encapsulates multiple numpy memmap files as a single memmap file
+    """
+    def __init__ (self, keys, root_dir="./", ):
+        """
+        Args:
+            keys (list): Filenames which are to be used as keys in the 
+                NPYDICT 
+            root_dir (str): Where the actual memmap files are
+        """
+        mmdict = {'dtype':np.float32, 'mode':'r'}
+        self.ns  = []      # container for elements
+        self.fmaps = []    # container for memmap files
+        # work
+        for k in keys:
+            self.fmaps.append (np.memmap (os.path.join (root_dir, k), shape=NPYDICT[k], **mmdict))
+            self.ns.append (self.fmaps[-1].shape[0])
+        # total len
+        self.nlen = sum(self.ns)
+
+
+    def __len__ (self, ):
+        return self.nlen
+
+    def __getitem__ (self, idx):
+        """For for only supports single element access"""
+        r = idx
+        for i, ni in enumerate(self.ns):
+            if r >= ni:
+                r = r - ni
+            else:
+                return self.fmaps[i][r]
+        return IndexError
+
 class NpyClfDatasets (Dataset):
     """
     Element but interfaces with multiple numpy
-    file using memory maps 
+    file using memory maps per each class
 
     Kind of assumed you are going to do with CAE
     """
     def __init__ (self, trues, falses, root_dir='./', transform=None):
         """
         Args:
-            trues(tuple) (filename, shape)
-                This is badly needed because numpy memory maps dont 
-                carry any shape information
-            falses(tuple) (filename, shape)
-            root_dir (string) path to the dataset
+            trues(list)  : List of btdd files.
+            falses(list) : List of btdd files.
             transform (callable, optional): Optional transform to be applied
         """
-        mmdict = {'dtype':np.float32, 'mode':'r'}
-        self.ntrue  = trues[1][0]
-        self.nfalse = falses[1][0]
+        self.trues  = NpyElement (trues, root_dir=root_dir)
+        self.falses = NpyElement (falses,root_dir=root_dir)
+        self.ntrue  = self.trues.nlen
+        self.nfalse = self.falses.nlen
         self.n      = self.ntrue + self.nfalse
         self.target = np.zeros (self.n, dtype=np.uint8)
         self.target[:self.ntrue] = 1
-        self.truemap = np.memmap (os.path.join (root_dir, trues[0]), shape=trues[1], **mmdict)
-        self.falsemap = np.memmap (os.path.join (root_dir, falses[0]), shape=falses[1], **mmdict)
         self.transform = transform
-
 
     def __len__(self):
         return self.n
@@ -197,12 +247,12 @@ class NpyClfDatasets (Dataset):
             idx = idx.tolist ()
         ret = dict ()
         if idx < self.ntrue:
-            ret['payload'] = torch.Tensor (self.truemap[idx])
-            ret['target']  = 1
+            ret['payload'] = torch.Tensor (self.trues[idx])
+            ret['target']  = torch.Tensor ([1, 0])
         else:
             ridx = idx - self.ntrue
-            ret['payload'] = torch.Tensor (self.falsemap[ridx])
-            ret['target']  = 0
+            ret['payload'] = torch.Tensor (self.falses[ridx])
+            ret['target']  = torch.Tensor ([0, 1])
         if self.transform:
             ret['payload'] = self.transform (ret['payload'])
         return ret
@@ -210,10 +260,11 @@ class NpyClfDatasets (Dataset):
     def train_test_split (self, test_size=0.3, shuffle=True,random_state=None):
         """returns indices to split train/test"""
         d_i  = np.arange (self.n)
-        train_i, test_i = train_test_split (d_i, test_size=0.3, shuffle=shuffle, stratify=self.target, random_state=random_state)
+        train_i, test_i = train_test_split (d_i, test_size=test_size, shuffle=shuffle, stratify=self.target, random_state=random_state)
         train_s         = SubsetRandomSampler (train_i)
         test_s          = SubsetRandomSampler (test_i)
         return train_s, test_s
+
 class NpyDatasets (Dataset):
     """
     Element but interfaces with multiple numpy
@@ -515,9 +566,12 @@ def DumpModel (ofile, model, optimizer=None, best=False):
         ff = "{0}_best.pth".format(ofile)
         torch.save (wr, ff)
 
-def LoadModel (ifile, model, optimizer=None):
+def LoadModel (ifile, model, optimizer=None, cpu=True):
     """Loads the model"""
-    ret = torch.load (ifile)
+    location = None
+    if cpu:
+        location = torch.device('cpu')
+    ret = torch.load (ifile, map_location=location)
     model.load_state_dict (ret['model_state'])
     if optimizer:
         optimizer.load_state_dict (ret['optimizer_state'])
