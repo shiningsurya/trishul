@@ -388,7 +388,7 @@ class SoruSoru(nn.Module):
         x = F.relu (self.c3 (x))
         x = x.view([x.size(0), -1])
         x = F.relu (self.fc1 (x))
-        x = F.relu (self.fc2 (x))
+        x = t.sigmoid (self.fc2 (x))
         return x
 
     
@@ -447,7 +447,7 @@ class YareYare(nn.Module):
         x = F.relu (self.c1 (x))
         x = F.relu (self.c2 (x))
         x = x.view([x.size(0), -1])
-        x = F.relu (self.fc1 (x))
+        x = t.sigmoid (self.fc1 (x))
         return x
 
     def decode (self, x):
@@ -497,7 +497,7 @@ class OiOi(nn.Module):
         x = F.relu (self.c1 (x))
         x = F.relu (self.c2 (x))
         x = x.view([x.size(0), -1])
-        x = F.relu (self.fc1 (x))
+        x = t.sigmoid (self.fc1 (x))
         return x
 
     def decode (self, x):
