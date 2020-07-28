@@ -315,8 +315,6 @@ class YomiYomi(nn.Module):
         self.d3  = nn.ConvTranspose2d (32, 16, kernel_size=3, stride=2, output_padding=0,)
         self.d2  = nn.ConvTranspose2d (16, 8, kernel_size=3, stride=2, output_padding=0)
         self.d1  = nn.ConvTranspose2d (8, 2, kernel_size=3, stride=2)
-        ##
-
     def encode (self, x):
         x = F.relu (self.c1 (x))
         x = F.relu (self.c2 (x))
@@ -325,7 +323,6 @@ class YomiYomi(nn.Module):
         x = F.relu (self.fc1 (x))
         x = F.relu (self.fc2 (x))
         return x
-
     
     def decode (self, x):
         x = F.relu (self.cf2(x))

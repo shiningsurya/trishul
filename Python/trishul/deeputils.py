@@ -127,7 +127,7 @@ class Element (Dataset):
     Shape = (2, 64, 64)
     First channel for Bowtie, second channel for de-dispersed filterbank
     """
-    def __init__ (self, filelist, root_dir, transform=None):
+    def __init__ (self, filelist, root_dir='', transform=None):
         """
         Args:
             filelist (string, list): Path to true file list or list
@@ -142,7 +142,7 @@ class Element (Dataset):
             allist = filelist 
         else:
             raise ValueError ("Expected either list or str, but got=", type(filelist))
-        self.n = len(filelist)
+        self.n = len(allist)
         #
         self.filelist   = allist
         self.root       = root_dir
@@ -266,6 +266,65 @@ class NpyClfDatasets (Dataset):
         return train_s, test_s
 
 class NpyDatasets (Dataset):
+    """
+    Element but interfaces with multiple numpy
+    file using memory maps 
+
+    Kind of assumed you are going to do with CAE
+    """
+    def __init__ (self, filedict, root_dir='./', transform=None):
+        """
+        Args:
+            filedict (dict) keys=filenames, values=number of triggers
+                This is badly needed because numpy memory maps dont 
+                carry any shape information
+            root_dir (string) path to the dataset
+            transform (callable, optional): Optional transform to be applied
+        """
+        self.fmap = dict()
+        mmdict = {'dtype':np.float32, 'mode':'r'}
+        self.n = 0
+        ## open mmaps in strictly read mode
+        for k, v in filedict.items():
+            self.fmap[v[0]] = np.memmap (os.path.join(root_dir, k), shape=v, **mmdict)
+            self.n += v[0]
+        self.fns = list (filedict.keys())
+        self.transform = transform
+
+
+    def __len__(self):
+        return self.n
+
+    def __getitem__ (self, idx):
+        """I guess this doesn't support list indexing"""
+        if torch.is_tensor (idx):
+            idx = idx.tolist ()
+        ret = dict ()
+        ridx = idx
+        fidx = 0
+        for k,v in self.fmap.items():
+            if k <= ridx:
+                ridx = ridx - k
+                fidx = fidx + 1
+                continue
+            if k > ridx:
+                ret['payload'] = torch.from_numpy( v[ridx] )
+                ret['source']  = os.path.basename(v.filename)
+                break
+
+        if self.transform:
+            ret['payload'] = self.transform (ret['payload'])
+        return ret
+
+    def train_test_split (self, test_size=0.3, shuffle=True,):
+        """returns indices to split train/test"""
+        d_i  = np.arange (self.n)
+        train_i, test_i = train_test_split (d_i, test_size=0.3, shuffle=shuffle)
+        train_s         = SubsetRandomSampler (train_i)
+        test_s          = SubsetRandomSampler (test_i)
+        return train_s, test_s
+
+class NpySupervised(Dataset):
     """
     Element but interfaces with multiple numpy
     file using memory maps 
