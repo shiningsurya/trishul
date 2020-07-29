@@ -667,6 +667,9 @@ class RegaRega (nn.Module):
             nn.LeakyReLU(),
             nn.Linear (8, num_classes),
             #nn.Softmax()
+        )
+    def forward (self, x):
+        return self.clf (x)
 
 class Zangetsu(nn.Module):
     """
@@ -724,7 +727,7 @@ class GearSecond (nn.Module):
     """
     A wholesome CNN network
 
-    SoruSoru Convolutional Autoencoder
+    Convolutional Autoencoder
     Zabimaru fc mlp clf
     
 
@@ -739,29 +742,31 @@ class GearSecond (nn.Module):
     ## clf
 
     """
-    def __init__ (self, idx=100, latent_dim=8, num_classes=2):
+    def __init__ (self, idx=100, latent_dim=32, num_classes=2):
         super (GearSecond, self).__init__ ()
         self.name = "GearSecond"
         self.idx  = idx
         self.input_shape = [2, 32, 32]
         # encode 
-        self.c1  = nn.Conv2d (2, 16, kernel_size=2, stride=2)
-        self.c2  = nn.Conv2d (16, 32, kernel_size=2, stride=2)
-        self.c3  = nn.Conv2d (32, 64, kernel_size=2, stride=2)
+        self.c1  = nn.Conv2d (2, 16,    kernel_size=2, stride=2)
+        self.c2  = nn.Conv2d (16, 32,   kernel_size=2, stride=2)
+        self.c3  = nn.Conv2d (32, 64,   kernel_size=2, stride=2)
+        self.c4  = nn.Conv2d (64, 128,  kernel_size=2, stride=2)
+        self.c5  = nn.Conv2d (128, 256, kernel_size=2, stride=2)
         ## reshape
-        self.before_fc = [64,4,4]
+        self.before_fc = [256,1,1]
         # lowest dim
-        self.fc1 = nn.Linear (1024, 64)
+        self.fc1 = nn.Linear (256, 64)
         self.fc2 = nn.Linear (64, latent_dim)
         ## clf
         self.clf = nn.Sequential (
-            nn.Linear (latent_dim, 8),
+            nn.Linear (latent_dim, 32),
             nn.LeakyReLU (),
-            nn.Linear (8, 8),
+            nn.Linear (32, 32),
             nn.LeakyReLU (),
-            nn.Linear (8, 8),
+            nn.Linear (32, 16),
             nn.LeakyReLU (),
-            nn.Linear (8, 8),
+            nn.Linear (16, 8),
             nn.LeakyReLU (),
             nn.Linear (8, num_classes),
             #nn.Sigmoid()
@@ -771,6 +776,8 @@ class GearSecond (nn.Module):
         x = F.relu (self.c1 (x))
         x = F.relu (self.c2 (x))
         x = F.relu (self.c3 (x))
+        x = F.relu (self.c4 (x))
+        x = F.relu (self.c5 (x))
         x = x.view([x.size(0), -1])
         x = F.relu (self.fc1 (x))
         x = t.sigmoid (self.fc2 (x))
