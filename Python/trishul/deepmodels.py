@@ -471,6 +471,102 @@ class SoruSoru(nn.Module):
         x = self.d1 (x, output_size=(x.size(0), 2, 32, 32))
         return x 
 
+class Please2(nn.Module):
+    """Ryujin Jakka """
+    def __init__ (self, idx=100, latent_dim=256, num_classes=2):
+        super (Please2, self).__init__ ()
+        self.name = "Please2"
+        self.idx  = idx
+        self.input_shape = [2, 32, 32]
+        # encode 
+        self.c1  = nn.Conv2d (2, 16,    kernel_size=2, stride=2)
+        self.c2  = nn.Conv2d (16, 32,   kernel_size=2, stride=2)
+        self.bn1 = nn.BatchNorm2d (32)
+        self.c3  = nn.Conv2d (32, 64,   kernel_size=2, stride=2)
+        self.c4  = nn.Conv2d (64, 128,  kernel_size=2, stride=2)
+        self.bn2 = nn.BatchNorm2d (128)
+        self.c5  = nn.Conv2d (128, 256, kernel_size=2, stride=2)
+        ## reshape
+        self.before_fc = [256,1,1]
+        ##
+        self.d5  = nn.ConvTranspose2d (256, 128, kernel_size=2, stride=2, output_padding=0,)
+        self.d4  = nn.ConvTranspose2d (128, 64, kernel_size=2, stride=2, output_padding=0)
+        self.nb2 = nn.BatchNorm2d (64)
+        self.d3  = nn.ConvTranspose2d (64, 32, kernel_size=2, stride=2, output_padding=0,)
+        self.d2  = nn.ConvTranspose2d (32, 16, kernel_size=2, stride=2, output_padding=0)
+        self.nb1 = nn.BatchNorm2d (16)
+        self.d1  = nn.ConvTranspose2d (16, 2, kernel_size=2, stride=2)
+
+    def encode (self, x):
+        x = F.relu (self.c1 (x))
+        x = F.relu (self.c2 (x))
+        x = self.bn1 (x)
+        x = F.relu (self.c3 (x))
+        x = F.relu (self.c4 (x))
+        x = self.bn2 (x)
+        x = t.sigmoid (self.c5 (x))
+        return x
+
+    def decode (self, x):
+        x = F.relu (self.d5 (x))
+        x = F.relu (self.d4 (x))
+        x = self.nb2 (x)
+        x = F.relu (self.d3 (x))
+        x = F.relu (self.d2 (x))
+        x = self.nb1 (x)
+        x = self.d1 (x)
+        x = t.sigmoid (x)
+        return x
+
+    def forward (self, x):
+        c = self.encode (x)
+        y = self.decode (c)
+        return y,c
+
+class Please(nn.Module):
+    """Ryujin Jakka """
+    def __init__ (self, idx=100, latent_dim=256, num_classes=2):
+        super (Please, self).__init__ ()
+        self.name = "Please"
+        self.idx  = idx
+        self.input_shape = [2, 32, 32]
+        # encode 
+        self.c1  = nn.Conv2d (2, 16,    kernel_size=2, stride=2)
+        self.c2  = nn.Conv2d (16, 32,   kernel_size=2, stride=2)
+        self.c3  = nn.Conv2d (32, 64,   kernel_size=2, stride=2)
+        self.c4  = nn.Conv2d (64, 128,  kernel_size=2, stride=2)
+        self.c5  = nn.Conv2d (128, 256, kernel_size=2, stride=2)
+        ## reshape
+        self.before_fc = [256,1,1]
+        ##
+        self.d5  = nn.ConvTranspose2d (256, 128, kernel_size=2, stride=2, output_padding=0,)
+        self.d4  = nn.ConvTranspose2d (128, 64, kernel_size=2, stride=2, output_padding=0)
+        self.d3  = nn.ConvTranspose2d (64, 32, kernel_size=2, stride=2, output_padding=0,)
+        self.d2  = nn.ConvTranspose2d (32, 16, kernel_size=2, stride=2, output_padding=0)
+        self.d1  = nn.ConvTranspose2d (16, 2, kernel_size=2, stride=2)
+
+    def encode (self, x):
+        x = F.relu (self.c1 (x))
+        x = F.relu (self.c2 (x))
+        x = F.relu (self.c3 (x))
+        x = F.relu (self.c4 (x))
+        x = t.sigmoid (self.c5 (x))
+        return x
+
+    def decode (self, x):
+        x = F.relu (self.d5 (x))
+        x = F.relu (self.d4 (x))
+        x = F.relu (self.d3 (x))
+        x = F.relu (self.d2 (x))
+        x = self.d1 (x)
+        x = t.sigmoid (x)
+        return x
+
+    def forward (self, x):
+        c = self.encode (x)
+        y = self.decode (c)
+        return y,c
+
 class Ryujin (nn.Module):
     """Ryujin Jakka """
     def __init__ (self, idx=100, latent_dim=16, num_classes=2):
@@ -729,17 +825,6 @@ class GearSecond (nn.Module):
 
     Convolutional Autoencoder
     Zabimaru fc mlp clf
-    
-
-    Input 
-    (2, 32, 32) 
-    -> (16, 16, 16) 
-    -> (32, 8,  8)
-    -> (64,4,4)
-    -> FC 1024 <-
-    -> FC 64 <-
-    -> FC 8 <-
-    ## clf
 
     """
     def __init__ (self, idx=100, latent_dim=32, num_classes=2):
@@ -750,37 +835,50 @@ class GearSecond (nn.Module):
         # encode 
         self.c1  = nn.Conv2d (2, 16,    kernel_size=2, stride=2)
         self.c2  = nn.Conv2d (16, 32,   kernel_size=2, stride=2)
+        self.bn1 = nn.BatchNorm2d (32)
         self.c3  = nn.Conv2d (32, 64,   kernel_size=2, stride=2)
         self.c4  = nn.Conv2d (64, 128,  kernel_size=2, stride=2)
+        self.bn2 = nn.BatchNorm2d (128)
         self.c5  = nn.Conv2d (128, 256, kernel_size=2, stride=2)
         ## reshape
         self.before_fc = [256,1,1]
         # lowest dim
-        self.fc1 = nn.Linear (256, 64)
-        self.fc2 = nn.Linear (64, latent_dim)
+        self.fc =  nn.Sequential (
+            nn.Linear (256, 64),
+            nn.LeakyReLU(),
+            nn.Dropout(),
+            nn.Linear (64, latent_dim),
+            nn.LeakyReLU(),
+            nn.Dropout(),
+        )
         ## clf
         self.clf = nn.Sequential (
             nn.Linear (latent_dim, 32),
             nn.LeakyReLU (),
+            nn.Dropout(),
             nn.Linear (32, 32),
             nn.LeakyReLU (),
+            nn.Dropout(),
             nn.Linear (32, 16),
             nn.LeakyReLU (),
+            nn.Dropout(),
             nn.Linear (16, 8),
             nn.LeakyReLU (),
+            nn.Dropout(),
             nn.Linear (8, num_classes),
             #nn.Sigmoid()
         )
         ##
     def forward (self, x):
-        x = F.relu (self.c1 (x))
-        x = F.relu (self.c2 (x))
-        x = F.relu (self.c3 (x))
-        x = F.relu (self.c4 (x))
-        x = F.relu (self.c5 (x))
+        x = F.leaky_relu (self.c1 (x))
+        x = F.leaky_relu (self.c2 (x))
+        x = self.bn1 (x)
+        x = F.leaky_relu (self.c3 (x))
+        x = F.leaky_relu (self.c4 (x))
+        x = self.bn2 (x)
+        x = F.leaky_relu (self.c5 (x))
         x = x.view([x.size(0), -1])
-        x = F.relu (self.fc1 (x))
-        x = t.sigmoid (self.fc2 (x))
+        x = self.fc (x)
         return self.clf (x)
 
 class GearFourth (nn.Module):
