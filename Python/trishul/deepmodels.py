@@ -601,17 +601,17 @@ class RegaRega (nn.Module):
         self.idx  = idx
         self.clf = nn.Sequential (
             nn.Linear (nin, 32),
-            nn.ReLU(),
-            nn.Linear (32, 32),
-            nn.ReLU(),
-            nn.Linear (32, 8),
-            nn.ReLU(),
+            nn.LeakyReLU(),
+            nn.Linear (32, 16),
+            nn.LeakyReLU(),
+            nn.Linear (16, 16),
+            nn.LeakyReLU(),
+            nn.Linear (16, 8),
+            nn.LeakyReLU(),
             nn.Linear (8, 8),
-            nn.ReLU(),
-            nn.Linear (8, 8),
-            nn.ReLU(),
-            nn.Linear (8, 2),
-            nn.Sigmoid()
+            nn.LeakyReLU(),
+            nn.Linear (8, num_classes),
+            #nn.Softmax()
         )
 
     def forward (self, x):
