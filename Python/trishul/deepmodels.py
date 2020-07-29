@@ -408,6 +408,61 @@ class SoruSoru(nn.Module):
         x = self.d1 (x, output_size=(x.size(0), 2, 32, 32))
         return x 
 
+class Ryujin (nn.Module):
+    """Ryujin Jakka """
+    def __init__ (self, idx=100, latent_dim=16, num_classes=2):
+        super (Ryujin, self).__init__ ()
+        self.name = "Ryujin"
+        self.idx  = idx
+        self.input_shape = [2, 32, 32]
+        # encode 
+        self.c1  = nn.Conv2d (2, 16,    kernel_size=2, stride=2)
+        self.c2  = nn.Conv2d (16, 32,   kernel_size=2, stride=2)
+        self.c3  = nn.Conv2d (32, 64,   kernel_size=2, stride=2)
+        self.c4  = nn.Conv2d (64, 128,  kernel_size=2, stride=2)
+        self.c5  = nn.Conv2d (128, 256, kernel_size=2, stride=2)
+        ## reshape
+        self.before_fc = [256,1,1]
+        # lowest dim
+        self.fc1 = nn.Linear (256, 64)
+        self.fc2 = nn.Linear (64, latent_dim)
+        ## reverse
+        self.cf2 = nn.Linear (latent_dim, 64)
+        self.cf1 = nn.Linear (64, 256)
+        ##
+        self.d5  = nn.ConvTranspose2d (256, 128, kernel_size=2, stride=2, output_padding=0,)
+        self.d4  = nn.ConvTranspose2d (128, 64, kernel_size=2, stride=2, output_padding=0)
+        self.d3  = nn.ConvTranspose2d (64, 32, kernel_size=2, stride=2, output_padding=0,)
+        self.d2  = nn.ConvTranspose2d (32, 16, kernel_size=2, stride=2, output_padding=0)
+        self.d1  = nn.ConvTranspose2d (16, 2, kernel_size=2, stride=2)
+    def encode (self, x):
+        x = F.relu (self.c1 (x))
+        x = F.relu (self.c2 (x))
+        x = F.relu (self.c3 (x))
+        x = F.relu (self.c4 (x))
+        x = F.relu (self.c5 (x))
+        x = x.view([x.size(0), -1])
+        x = F.relu (self.fc1 (x))
+        x = t.sigmoid (self.fc2 (x))
+        return x
+
+    def decode (self, x):
+        x = F.relu (self.cf2(x))
+        x = F.relu (self.cf1(x))
+        x = x.view ([-1, 256, 1, 1])
+        x = F.relu (self.d5 (x))
+        x = F.relu (self.d4 (x))
+        x = F.relu (self.d3 (x))
+        x = F.relu (self.d2 (x))
+        x = self.d1 (x)
+        x = t.sigmoid (x)
+        return x
+
+    def forward (self, x):
+        c = self.encode (x)
+        y = self.decode (c)
+        return y,c
+
 class YareYare(nn.Module):
     """
     YareYare Convolutional Autoencoder
@@ -521,6 +576,249 @@ class SenbonSakura (nn.Module):
             nn.Linear (nin, 4),
             nn.ReLU (True),
             nn.Linear (4, 2),
+            nn.Sigmoid()
+        )
+
+    def forward (self, x):
+        x = self.clf (x)
+        return x
+
+class Zangetsu(nn.Module):
+    """
+    The classifier taking code
+    """
+    def __init__ (self, idx=60, nin=8, num_classes=2):
+        super (Zangetsu, self).__init__()
+        self.name = "Zangetsu"
+        self.idx  = idx
+        self.clf = nn.Sequential (
+            nn.Linear (nin, 6),
+            nn.ReLU (True),
+            nn.Linear (6, 4),
+            nn.ReLU (True),
+            nn.Linear (4, 2),
+            nn.Sigmoid()
+        )
+
+    def forward (self, x):
+        x = self.clf (x)
+        return x
+
+class Zabimaru(nn.Module):
+    """
+    The classifier taking code
+    """
+    def __init__ (self, idx=60, nin=8, num_classes=2):
+        super (Zabimaru, self).__init__()
+        self.name = "Zabimaru"
+        self.idx  = idx
+        self.clf = nn.Sequential (
+            nn.Linear (nin, 8),
+            nn.ReLU (True),
+            nn.Linear (8, 8),
+            nn.ReLU (True),
+            nn.Linear (8, 8),
+            nn.ReLU (True),
+            nn.Dropout(),
+            nn.Linear (8, 8),
+            nn.ReLU (True),
+            nn.Linear (8, 8),
+            nn.ReLU (True),
+            nn.Dropout(),
+            nn.Linear (8, 8),
+            nn.ReLU (True),
+            nn.Linear (8, num_classes),
+            nn.Sigmoid()
+        )
+
+    def forward (self, x):
+        x = self.clf (x)
+        return x
+
+class GearSecond (nn.Module):
+    """
+    A wholesome CNN network
+
+    SoruSoru Convolutional Autoencoder
+    Zabimaru fc mlp clf
+    
+
+    Input 
+    (2, 32, 32) 
+    -> (16, 16, 16) 
+    -> (32, 8,  8)
+    -> (64,4,4)
+    -> FC 1024 <-
+    -> FC 64 <-
+    -> FC 8 <-
+    ## clf
+
+    """
+    def __init__ (self, idx=100, latent_dim=8, num_classes=2):
+        super (GearSecond, self).__init__ ()
+        self.name = "GearSecond"
+        self.idx  = idx
+        self.input_shape = [2, 32, 32]
+        # encode 
+        self.c1  = nn.Conv2d (2, 16, kernel_size=2, stride=2)
+        self.c2  = nn.Conv2d (16, 32, kernel_size=2, stride=2)
+        self.c3  = nn.Conv2d (32, 64, kernel_size=2, stride=2)
+        ## reshape
+        self.before_fc = [64,4,4]
+        # lowest dim
+        self.fc1 = nn.Linear (1024, 64)
+        self.fc2 = nn.Linear (64, latent_dim)
+        ## clf
+        self.clf = nn.Sequential (
+            nn.Linear (latent_dim, 8),
+            nn.LeakyReLU (),
+            nn.Linear (8, 8),
+            nn.LeakyReLU (),
+            nn.Linear (8, 8),
+            nn.LeakyReLU (),
+            nn.Linear (8, 8),
+            nn.LeakyReLU (),
+            nn.Linear (8, num_classes),
+            #nn.Sigmoid()
+        )
+        ##
+    def forward (self, x):
+        x = F.relu (self.c1 (x))
+        x = F.relu (self.c2 (x))
+        x = F.relu (self.c3 (x))
+        x = x.view([x.size(0), -1])
+        x = F.relu (self.fc1 (x))
+        x = t.sigmoid (self.fc2 (x))
+        return self.clf (x)
+
+class GearFourth (nn.Module):
+    """
+    A wholesome CNN network
+
+    SoruSoru Convolutional Autoencoder
+    Zabimaru fc mlp clf
+    
+
+    Input 
+    (2, 32, 32) 
+    -> (16, 16, 16) 
+    -> (32, 8,  8)
+    -> (64,4,4)
+    -> FC 1024 <-
+    -> FC 64 <-
+    -> FC 8 <-
+    ## clf
+
+    """
+    def __init__ (self, idx=100, latent_dim=16, num_classes=2):
+        super (GearFourth, self).__init__ ()
+        self.name = "GearFourth"
+        self.idx  = idx
+        self.input_shape = [2, 32, 32]
+        # encode 
+        self.c1  = nn.Conv2d (2, 16,    kernel_size=2, stride=2)
+        self.c2  = nn.Conv2d (16, 32,   kernel_size=2, stride=2)
+        self.c3  = nn.Conv2d (32, 64,   kernel_size=2, stride=2)
+        self.c4  = nn.Conv2d (64, 128,  kernel_size=2, stride=2)
+        self.c5  = nn.Conv2d (128, 256, kernel_size=2, stride=2)
+        ## reshape
+        self.before_fc = [256,1,1]
+        # lowest dim
+        self.fc1 = nn.Linear (256, 64)
+        self.fc2 = nn.Linear (64, latent_dim)
+        ## clf
+        self.clf = nn.Sequential (
+            nn.Linear (latent_dim, 8),
+            nn.LeakyReLU (),
+            nn.Linear (8, 8),
+            nn.LeakyReLU (),
+            nn.Linear (8, 8),
+            nn.LeakyReLU (),
+            nn.Linear (8, 8),
+            nn.LeakyReLU (),
+            nn.Linear (8, num_classes),
+            #nn.Sigmoid()
+        )
+        ##
+    def forward (self, x):
+        x = F.relu (self.c1 (x))
+        x = F.relu (self.c2 (x))
+        x = F.relu (self.c3 (x))
+        x = x.view([x.size(0), -1])
+        x = F.relu (self.fc1 (x))
+        x = t.sigmoid (self.fc2 (x))
+        return self.clf (x)
+
+class GearThird (nn.Module):
+    """
+    A wholesome CNN network
+
+    SoruSoru Convolutional Autoencoder
+    Zabimaru fc mlp clf
+    
+
+    Input 
+    (2, 32, 32) 
+    -> (16, 16, 16) 
+    -> (32, 8,  8)
+    -> (64,4,4)
+    -> FC 1024 <-
+    -> FC 64 <-
+    -> FC 8 <-
+    ## clf
+
+    """
+    def __init__ (self, idx=100, latent_dim=8, num_classes=2):
+        super (GearThird, self).__init__ ()
+        self.name = "GearThird"
+        self.idx  = idx
+        self.input_shape = [2, 32, 32]
+        # encode 
+        self.c1  = nn.Conv2d (2, 16, kernel_size=3, stride=1)
+        self.c2  = nn.Conv2d (16, 32, kernel_size=3, stride=1)
+        self.c3  = nn.Conv2d (32, 64, kernel_size=3, stride=1)
+        ## reshape
+        self.before_fc = [64,26,26]
+        # lowest dim
+        self.fc1 = nn.Linear (43264, 512)
+        self.fc2 = nn.Linear (512, num_classes)
+        ## clf
+        ##
+    def forward (self, x):
+        x = F.relu (self.c1 (x))
+        x = F.relu (self.c2 (x))
+        x = F.relu (self.c3 (x))
+        x = x.view([x.size(0), -1])
+        x = F.relu (self.fc1 (x))
+        x = t.sigmoid (self.fc2 (x))
+        return x
+
+class Zanka(nn.Module):
+    """
+    The classifier taking code
+    """
+    def __init__ (self, idx=60, nin=8, num_classes=2):
+        super (Zanka, self).__init__()
+        self.name = "Zanka"
+        self.idx  = idx
+        self.clf = nn.Sequential (
+            nn.Linear (nin, 8),
+            nn.Sigmoid(),
+            nn.Linear (8, 8),
+            nn.Sigmoid(),
+            nn.Linear (8, 4),
+            nn.Sigmoid(),
+            nn.Linear (4, 4),
+            nn.Sigmoid(),
+            nn.Linear (4, 4),
+            nn.Sigmoid(),
+            nn.Linear (4, 4),
+            nn.Sigmoid(),
+            nn.Linear (4, 4),
+            nn.Sigmoid(),
+            nn.Linear (4, 2),
+            nn.Sigmoid(),
+            nn.Linear (2, num_classes),
             nn.Sigmoid()
         )
 
