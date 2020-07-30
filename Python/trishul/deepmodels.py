@@ -521,6 +521,7 @@ class Please2(nn.Module):
     def forward (self, x):
         c = self.encode (x)
         y = self.decode (c)
+        c = c.view ([c.size(0), -1])
         return y,c
 
 class Please(nn.Module):
@@ -746,22 +747,18 @@ class RegaRega (nn.Module):
     """
     The classifier taking code
     """
-    def __init__ (self, idx=60, nin=32, num_classes=2):
+    def __init__ (self, idx=60, nin=256, num_classes=2):
         super (RegaRega, self).__init__()
         self.name = "RegaRega"
         self.idx  = idx
         self.clf = nn.Sequential (
             nn.Linear (nin, 32),
             nn.LeakyReLU(),
+            nn.Dropout(),
             nn.Linear (32, 16),
             nn.LeakyReLU(),
-            nn.Linear (16, 16),
-            nn.LeakyReLU(),
-            nn.Linear (16, 8),
-            nn.LeakyReLU(),
-            nn.Linear (8, 8),
-            nn.LeakyReLU(),
-            nn.Linear (8, num_classes),
+            nn.Dropout(),
+            nn.Linear (16, num_classes),
             #nn.Softmax()
         )
     def forward (self, x):
