@@ -414,7 +414,7 @@ class NpyDataset (Dataset):
         if torch.is_tensor (idx):
             idx = idx.tolist ()
         ret = dict ()
-        ret['payload'] = torch.from_numpy (self.fmap[idx])
+        ret['payload'] = np.array (self.fmap[idx])
 
         if self.transform:
             ret['payload'] = self.transform (ret['payload'])
