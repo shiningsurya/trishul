@@ -26,6 +26,7 @@ NPYDICT = {
         'whitenoise_btdd.npy':             (9717  ,2,32,32),
         'faketrue_btdd.npy':               (8480  ,2,32,32),
         'vall_psr_btdd.npy':               (23574 ,2,32,32),
+        'vall_psr7_btdd.npy':              (19197,2,32,32),
         'vall_rfi_btdd.npy':               (8207  ,2,32,32),
         'vall_dm150_rfi_btdd.npy':         (20660 ,2,32,32),
 }
@@ -33,6 +34,7 @@ NPYDICT = {
 True.FAKETRUE     =    8480
 True.PSR          =   23574
 True              =   32054
+True.PSR7         =   19197
 ---
 False.RFI         =    8207
 False.DM150       =   20660
@@ -248,11 +250,11 @@ class NpyClfDatasets (Dataset):
         ret = dict ()
         if idx < self.ntrue:
             ret['payload'] = torch.Tensor (self.trues[idx])
-            ret['target']  = torch.Tensor ([1, 0])
+            ret['target']  = torch.Tensor ([1]).to (torch.long)
         else:
             ridx = idx - self.ntrue
             ret['payload'] = torch.Tensor (self.falses[ridx])
-            ret['target']  = torch.Tensor ([0, 1])
+            ret['target']  = torch.Tensor ([0]).to (torch.long)
         if self.transform:
             ret['payload'] = self.transform (ret['payload'])
         return ret
