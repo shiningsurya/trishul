@@ -1,0 +1,67 @@
+#!/usr/bin/env python3.7
+import os
+import numpy as np
+from tqdm import tqdm
+# trishul imports
+import trishul.deeputils   as tdu
+import trishul.deepmodels  as tdm
+import trishul.deeptrainer as tdt
+# torch imports
+import torch       as t
+import torch.nn    as tn
+import torch.optim as to
+import torch.nn.functional as tf
+import torch.optim.lr_scheduler as tolr
+# ignite imports
+import ignite.engine   as ie
+import ignite.metrics  as im
+import ignite.handlers as ih
+
+if __name__ == "__main__":
+    DSIR = "./"
+    MDIR = "zebelblast/"
+    IIDX = "igtrainclf"
+    TRUES = ["faketrue_btdd.npy","vall_psr7_btdd.npy"]
+    # TRUES = ["vall_psr_btdd.npy"]
+    # FALSES = ["vall_rfi_btdd.npy", "vall_dm150_rfi_btdd.npy","whitenoise_btdd.npy"]
+    FALSES = ["vall_rfi_btdd.npy", "vall_dm150_rfi_btdd.npy"]
+    DSet = tdu.NpyClfDatasets (TRUES, FALSES, DSIR,)
+    t_DataLoader     = tdu.DataLoader (DSet, batch_size=10, pin_memory=True)
+    #########################
+    DESC = "Iteration {}"
+    PBAR = tqdm (initial=0, leave=False, total=len(t_DataLoader), desc=DESC.format(0))
+    CLF  = tdm.ZebelBlast(idx=50)
+    if True:
+        RFROM = "/home/shining/mega/machine_learnings/zebelblast/checkpoint_1357200.pt"
+        tqdm.write ("Resuming from {}".format(RFROM))
+        chkp = t.load (RFROM)
+        ih.Checkpoint.load_objects (to_load={"model":CLF}, checkpoint=chkp)
+    VAL_METRICS = {
+        "acc":im.Accuracy(),
+        "recall":im.Recall(),
+        "precision":im.Precision(),
+        "cfm":im.ConfusionMatrix(2)
+    }
+    #########################
+    def eval_step(engine, batch):
+        CLF.eval()
+        with t.no_grad():
+            x, y = batch['payload'], batch['target']
+            y = y.squeeze (1)
+            ypred = CLF (x)
+            ypred = tf.softmax (ypred, -1)
+            return ypred, y
+    EVALUATOR = ie.Engine (eval_step)
+    for name, metric in VAL_METRICS.items():
+        metric.attach (EVALUATOR, name)
+    #####
+    @EVALUATOR.on (ie.Events.ITERATION_COMPLETED(every=10))
+    def log_log (engine):
+        PBAR.desc = DESC.format (engine.state.epoch)
+        PBAR.update (10)
+    #########################
+    EVALUATOR.run (t_DataLoader)
+    PBAR.close ()
+    metrics = EVALUATOR.state.metrics
+    for k,v in metrics.items():
+        print ("{0} --> {1}".format(k,v))

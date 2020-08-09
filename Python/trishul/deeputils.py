@@ -2,6 +2,7 @@
 Deep learning based candidate dump vetter
 """
 import os
+import random
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle as pkl
@@ -16,19 +17,21 @@ from torch.utils.data import DataLoader
 from torch.utils.data import Sampler
 from torch.utils.data import SubsetRandomSampler 
 # torch vision imports
-from skimage.measure import block_reduce
+from skimage.measure  import block_reduce
 import torchvision.transforms as tvt
 # trishul imports
-from .dbson         import DBSON 
+from .dbson           import DBSON 
 
 NPYDICT = {
         'vall_btdd.npy':                   (818848,2,32,32),
         'whitenoise_btdd.npy':             (9717  ,2,32,32),
         'faketrue_btdd.npy':               (8480  ,2,32,32),
         'vall_psr_btdd.npy':               (23574 ,2,32,32),
-        'vall_psr7_btdd.npy':              (19197,2,32,32),
+        'vall_psr7_btdd.npy':              (19197 ,2,32,32),
         'vall_rfi_btdd.npy':               (8207  ,2,32,32),
         'vall_dm150_rfi_btdd.npy':         (20660 ,2,32,32),
+        'aoc_test_true.npy':               (1716  ,2,32,32),
+        'aoc_test_false.npy':              (1700  ,2,32,32),
 }
 """
 True.FAKETRUE     =    8480
@@ -48,6 +51,36 @@ ATTN:
     -- First element  is TRUE
     -- Second element is FALSE
 """
+
+
+class DDFlip (object):
+    """DD Flip
+
+    Randomly flips de-dispersed filterbank about time axis
+
+    Time (xaxis) Frequency (yaxis) becomes time (xaxis) frequency (-yaxis)
+    """
+    def __init__ (self, p=0.5):
+        self.p = p
+    def __call__ (self, x):
+        if random.random() < self.p:
+            x[1] = x[1].flip (0)
+        return x
+
+class BTFlip (object):
+    """BT Flip
+
+    Randomly flips bowtie plane about time axis+DM axis
+
+    Time (xaxis) DM (yaxis) becomes time (-xaxis) DM (-yaxis)
+    """
+    def __init__ (self, p=0.5):
+        self.p = p
+
+    def __call__ (self, x):
+        if random.random() < self.p:
+            x[0] = x[0].flip ((0,1))
+        return x
 
 class BTElement (Dataset):
     """
@@ -249,11 +282,11 @@ class NpyClfDatasets (Dataset):
             idx = idx.tolist ()
         ret = dict ()
         if idx < self.ntrue:
-            ret['payload'] = torch.Tensor (self.trues[idx])
+            ret['payload'] = torch.Tensor (self.trues[idx].copy())
             ret['target']  = torch.Tensor ([1]).to (torch.long)
         else:
             ridx = idx - self.ntrue
-            ret['payload'] = torch.Tensor (self.falses[ridx])
+            ret['payload'] = torch.Tensor (self.falses[ridx].copy())
             ret['target']  = torch.Tensor ([0]).to (torch.long)
         if self.transform:
             ret['payload'] = self.transform (ret['payload'])
