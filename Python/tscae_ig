@@ -1,0 +1,129 @@
+#!/usr/bin/env python3.7
+import os
+import numpy as np
+from tqdm import tqdm
+# trishul imports
+import trishul.deeputils   as tdu
+import trishul.deepmodels  as tdm
+import trishul.deeptrainer as tdt
+# torch imports
+import torch       as t
+import torch.nn    as tn
+import torch.optim as to
+import torch.optim.lr_scheduler as tolr
+import torch.nn.functional as tf
+import torchvision.transforms as tt
+# ignite imports
+import ignite.engine   as ie
+import ignite.metrics  as im
+import ignite.handlers as ih
+
+if __name__ == "__main__":
+    DSIR = "./"
+    MDIR = "zebelblast2/"
+    IIDX = "igtrainclf"
+    TRUES = ["faketrue_btdd.npy","vall_psr7_btdd.npy"]
+    FALSES = ["vall_rfi_btdd.npy", "vall_dm150_rfi_btdd.npy"]
+    transforms = tt.Compose ([
+        tdu.DDFlip(),
+        tdu.BTFlip(),
+    ])
+    DSet = tdu.NpyClfDatasets (TRUES, FALSES, DSIR, transform=transforms)
+    train_l, val_l   = DSet.train_test_split (random_state=24, test_size=0.2)
+    t_DataLoader     = tdu.DataLoader (DSet, sampler=train_l, batch_size=10, pin_memory=True)
+    v_DataLoader     = tdu.DataLoader (DSet, sampler=val_l,   batch_size=10, pin_memory=True)
+    #########################
+    DESC = "Epoch {} - loss {:.2f}"
+    PBAR = tqdm (initial=0, leave=False, total=len(t_DataLoader), desc=DESC.format(0, 0))
+    CLF  = tdm.ZebelBlast(idx=50)
+    LFN  = tn.CrossEntropyLoss()
+    OPM  = to.Adam(CLF.parameters(), lr=1e-3,)
+    LRS  = tolr.StepLR (OPM, step_size=250, gamma=0.75)
+    VAL_METRICS = {'loss':im.Loss (LFN)}
+    L_TRAIN = []
+    L_EVAL  = []
+    #########################
+    def train_step(engine, batch):
+        CLF.train()
+        OPM.zero_grad()
+        x, y = batch['payload'], batch['target']
+        ypred = CLF (x)
+        loss = LFN (ypred, y.squeeze(1))
+        loss.backward()
+        OPM.step()
+        return loss.item()
+
+    def eval_step(engine, batch):
+        CLF.eval()
+        with t.no_grad():
+            x, y = batch['payload'], batch['target']
+            y = y.squeeze (1)
+            ypred = CLF (x)
+            return ypred, y
+
+    TRAINER   = ie.Engine (train_step)
+    EVALUATOR = ie.Engine (eval_step)
+    for name, metric in VAL_METRICS.items():
+        metric.attach (EVALUATOR, name)
+    #########################
+    TO_CHECKP  = {
+        "trainer":TRAINER,
+        "evaluator":EVALUATOR,
+        "model":CLF,
+        "optimizer":OPM,
+        "lr_scheduler":LRS,
+    }
+    tckp = ih.Checkpoint (
+        to_save = TO_CHECKP,
+        save_handler = ih.DiskSaver (MDIR, require_empty=False),
+        n_saved=10,
+    )
+    TRAINER.add_event_handler (ie.Events.EPOCH_COMPLETED (every=50), tckp)
+    ###########
+    ## resume logic
+    if False:
+        RFROM = "/home/shining/mega/machine_learnings/zebelblast/checkpoint_1357200.pt"
+        tqdm.write ("Resuming from {}".format(RFROM))
+        chkp = t.load (RFROM)
+        ih.Checkpoint.load_objects (to_load=TO_CHECKP, checkpoint=chkp)
+    ###########
+    @TRAINER.on (ie.Events.EPOCH_COMPLETED)
+    def lr_step (engine):
+        LRS.step ()
+
+    @TRAINER.on (ie.Events.ITERATION_COMPLETED(every=10))
+    def log_training_loss (engine):
+        PBAR.desc = DESC.format (engine.state.epoch, engine.state.output)
+        PBAR.update (10)
+
+    @TRAINER.on (ie.Events.EPOCH_COMPLETED)
+    def log_training_results (TRAINER):
+        PBAR.refresh()
+        EVALUATOR.run (t_DataLoader)
+        metrics = EVALUATOR.state.metrics
+        tqdm.write ("Training   :: Epoch {} Loss {:.2f}".format (TRAINER.state.epoch, np.log10(metrics['loss'])))
+        L_TRAIN.append (metrics['loss'])
+        PBAR.n = PBAR.last_print_n = 0
+
+    @TRAINER.on (ie.Events.EPOCH_COMPLETED)
+    def log_validation_results (TRAINER):
+        EVALUATOR.run (v_DataLoader)
+        metrics = EVALUATOR.state.metrics
+        tqdm.write ("Validation :: Epoch {} Loss {:.2f}".format (TRAINER.state.epoch, np.log10(metrics['loss'])))
+        L_EVAL.append (metrics['loss'])
+        PBAR.n = PBAR.last_print_n = 0
+
+    def loss_score (engine):
+        return -engine.state.metrics['loss']
+    early_stopper = ih.EarlyStopping (patience=10,score_function=loss_score,trainer=TRAINER)
+    # EVALUATOR.add_event_handler (ie.Events.COMPLETED, early_stopper)
+    #########################
+    try:
+        TRAINER.run (t_DataLoader, max_epochs=1000)
+        PBAR.close ()
+    except KeyboardInterrupt:
+        print ("Received keyboard interrupt")
+    ######
+    with open (os.path.join (MDIR, "losses1k.pkl"), 'wb') as lf:
+        import pickle as pkl
+        pkl.dump ([L_TRAIN, L_EVAL], lf)

@@ -830,13 +830,25 @@ class GearSecond (nn.Module):
         self.idx  = idx
         self.input_shape = [2, 32, 32]
         # encode 
-        self.c1  = nn.Conv2d (2, 16,    kernel_size=2, stride=2)
-        self.c2  = nn.Conv2d (16, 32,   kernel_size=2, stride=2)
-        self.bn1 = nn.BatchNorm2d (32)
-        self.c3  = nn.Conv2d (32, 64,   kernel_size=2, stride=2)
-        self.c4  = nn.Conv2d (64, 128,  kernel_size=2, stride=2)
-        self.bn2 = nn.BatchNorm2d (128)
-        self.c5  = nn.Conv2d (128, 256, kernel_size=2, stride=2)
+        self.encode = nn.Sequential (
+            nn.Conv2d (2, 16, kernel_size=2, stride=2),
+            nn.LeakyReLU(),
+            nn.Dropout2d (),
+            nn.Conv2d (16, 32, kernel_size=2, stride=2),
+            nn.LeakyReLU(),
+            nn.Dropout2d (),
+            nn.BatchNorm2d (32),
+            nn.Conv2d (32, 64, kernel_size=2, stride=2),
+            nn.LeakyReLU(),
+            nn.Dropout2d (),
+            nn.Conv2d (64, 128, kernel_size=2, stride=2),
+            nn.LeakyReLU(),
+            nn.Dropout2d (),
+            nn.BatchNorm2d (128),
+            nn.Conv2d (128, 256, kernel_size=2, stride=2),
+            nn.LeakyReLU(),
+
+        )
         ## reshape
         self.before_fc = [256,1,1]
         # lowest dim
@@ -847,6 +859,7 @@ class GearSecond (nn.Module):
             nn.Linear (64, latent_dim),
             nn.LeakyReLU(),
             nn.Dropout(),
+            nn.BatchNorm1d (latent_dim)
         )
         ## clf
         self.clf = nn.Sequential (
@@ -867,13 +880,73 @@ class GearSecond (nn.Module):
         )
         ##
     def forward (self, x):
-        x = F.leaky_relu (self.c1 (x))
-        x = F.leaky_relu (self.c2 (x))
-        x = self.bn1 (x)
-        x = F.leaky_relu (self.c3 (x))
-        x = F.leaky_relu (self.c4 (x))
-        x = self.bn2 (x)
-        x = F.leaky_relu (self.c5 (x))
+        x = self.encode (x)
+        x = x.view([x.size(0), -1])
+        x = self.fc (x)
+        return self.clf (x)
+
+class ZebelBlast(nn.Module):
+    """
+    A wholesome CNN network
+
+    """
+    def __init__ (self, idx=100, latent_dim=32, num_classes=2):
+        super (ZebelBlast, self).__init__ ()
+        self.name = "ZebelBlast"
+        self.idx  = idx
+        self.input_shape = [2, 32, 32]
+        # encode 
+        self.encode = nn.Sequential (
+            nn.Conv2d (2, 16, kernel_size=2, stride=2),
+            nn.LeakyReLU(),
+            nn.Dropout2d (),
+            nn.Conv2d (16, 32, kernel_size=2, stride=2),
+            nn.LeakyReLU(),
+            nn.Dropout2d (),
+            nn.BatchNorm2d (32),
+            nn.Conv2d (32, 64, kernel_size=2, stride=2),
+            nn.LeakyReLU(),
+            nn.Dropout2d (),
+            nn.Conv2d (64, 128, kernel_size=2, stride=2),
+            nn.LeakyReLU(),
+            nn.Dropout2d (),
+            nn.BatchNorm2d (128),
+            nn.Conv2d (128, 256, kernel_size=2, stride=2),
+            nn.LeakyReLU(),
+
+        )
+        ## reshape
+        self.before_fc = [256,1,1]
+        # lowest dim
+        self.fc =  nn.Sequential (
+            nn.Linear (256, 64),
+            nn.LeakyReLU(),
+            nn.Dropout(),
+            nn.Linear (64, latent_dim),
+            nn.LeakyReLU(),
+            nn.Dropout(),
+            nn.BatchNorm1d (latent_dim)
+        )
+        ## clf
+        self.clf = nn.Sequential (
+            nn.Linear (latent_dim, 32),
+            nn.LeakyReLU (),
+            nn.Dropout(),
+            nn.Linear (32, 32),
+            nn.LeakyReLU (),
+            nn.Dropout(),
+            nn.Linear (32, 16),
+            nn.LeakyReLU (),
+            nn.Dropout(),
+            nn.Linear (16, 8),
+            nn.LeakyReLU (),
+            nn.Dropout(),
+            nn.Linear (8, num_classes),
+            #nn.Sigmoid()
+        )
+        ##
+    def forward (self, x):
+        x = self.encode (x)
         x = x.view([x.size(0), -1])
         x = self.fc (x)
         return self.clf (x)
@@ -991,22 +1064,12 @@ class Zanka(nn.Module):
         self.clf = nn.Sequential (
             nn.Linear (nin, 8),
             nn.Sigmoid(),
-            nn.Linear (8, 8),
-            nn.Sigmoid(),
+            nn.Dropout(),
             nn.Linear (8, 4),
             nn.Sigmoid(),
-            nn.Linear (4, 4),
-            nn.Sigmoid(),
-            nn.Linear (4, 4),
-            nn.Sigmoid(),
-            nn.Linear (4, 4),
-            nn.Sigmoid(),
-            nn.Linear (4, 4),
-            nn.Sigmoid(),
-            nn.Linear (4, 2),
-            nn.Sigmoid(),
-            nn.Linear (2, num_classes),
-            nn.Sigmoid()
+            nn.Dropout(),
+            nn.Linear (4, num_classes),
+            # nn.Sigmoid()
         )
 
     def forward (self, x):
