@@ -248,11 +248,11 @@ class NpyClfDatasets (Dataset):
         ret = dict ()
         if idx < self.ntrue:
             ret['payload'] = torch.Tensor (self.trues[idx])
-            ret['target']  = torch.Tensor ([1, 0])
+            ret['target']  = torch.Tensor ([1]).to(torch.long)
         else:
             ridx = idx - self.ntrue
             ret['payload'] = torch.Tensor (self.falses[ridx])
-            ret['target']  = torch.Tensor ([0, 1])
+            ret['target']  = torch.Tensor ([0]).to (torch.long)
         if self.transform:
             ret['payload'] = self.transform (ret['payload'])
         return ret
