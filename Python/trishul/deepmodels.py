@@ -951,6 +951,66 @@ class ZebelBlast(nn.Module):
         x = self.fc (x)
         return self.clf (x)
 
+class Battousai(nn.Module):
+    """
+    A wholesome CNN network
+
+    """
+    def __init__ (self, idx=100, latent_dim=32, num_classes=2):
+        super (Battousai, self).__init__ ()
+        self.name = "Battousai"
+        self.idx  = idx
+        self.input_shape = [2, 32, 32]
+        # encode 
+        self.encode = nn.Sequential (
+            nn.Conv2d (2, 16, kernel_size=2, stride=2),
+            nn.LeakyReLU(),
+            nn.Dropout2d (),
+            nn.Conv2d (16, 32, kernel_size=2, stride=2),
+            nn.LeakyReLU(),
+            nn.Dropout2d (),
+            nn.BatchNorm2d (32),
+            nn.Conv2d (32, 64, kernel_size=2, stride=2),
+            nn.LeakyReLU(),
+            nn.Dropout2d (),
+            nn.Conv2d (64, 128, kernel_size=2, stride=2),
+            nn.LeakyReLU(),
+            nn.Dropout2d (),
+            nn.BatchNorm2d (128),
+            nn.Conv2d (128, 256, kernel_size=2, stride=2),
+            nn.LeakyReLU(),
+
+        )
+        ## reshape
+        self.before_fc = [256,1,1]
+        # lowest dim
+        self.fc =  nn.Sequential (
+            nn.Linear (256, 64),
+            nn.LeakyReLU(),
+            nn.Dropout(),
+            nn.Linear (64, latent_dim),
+            nn.LeakyReLU(),
+            nn.Dropout(),
+            nn.BatchNorm1d (latent_dim)
+        )
+        ## clf
+        self.clf = nn.Sequential (
+            nn.Linear (latent_dim, 16),
+            nn.LeakyReLU (),
+            nn.Dropout(),
+            nn.Linear (16, 8),
+            nn.LeakyReLU (),
+            nn.Dropout(),
+            nn.Linear (8, num_classes),
+            #nn.Sigmoid()
+        )
+        ##
+    def forward (self, x):
+        x = self.encode (x)
+        x = x.view([x.size(0), -1])
+        x = self.fc (x)
+        return self.clf (x)
+
 class GearFourth (nn.Module):
     """
     A wholesome CNN network
