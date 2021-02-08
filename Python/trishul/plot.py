@@ -93,7 +93,7 @@ def candidate_plot (bt, dd, dm_axis, f_axis, tsamp, sdt, fig=None, path="./"):
     axdd.set_ylabel ("Freq [MHz]")
     # --
     tslice = dm_axis.size//2
-    fslice = f_axis.size//2
+    fslice = int(sdt[3] // tsamp)
     #
     axst.step (t0+np.arange(bt.shape[1])*tsamp, bt[tslice], 'k')
     # axst.set_xlabel ("Time [s]")
