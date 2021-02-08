@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mc
 
-
+from skimage.measure import block_reduce
 
 def BTC (bt=None, dm=None, t=None, fig=None):
     '''
@@ -88,7 +88,8 @@ def candidate_plot (bt, dd, dm_axis, f_axis, tsamp, sdt, fig=None, path="./"):
     axsd = fig.add_subplot (2,2,4)                                                          # s/n (d)
     # plotting
     t1 = t0 + (dd.shape[1]*tsamp)
-    axdd.imshow (dd, aspect='auto', extent=[t0, t1, f_axis[0], f_axis[-1]], origin='lower', cmap='jet', norm=mc.LogNorm())
+    pdd = block_reduce (dd, (4,4), func=np.mean)
+    axdd.imshow (pdd, aspect='auto', extent=[t0, t1, f_axis[0], f_axis[-1]], origin='lower', cmap='jet', norm=mc.LogNorm())
     axdd.set_xlabel ("Time [s]")
     axdd.set_ylabel ("Freq [MHz]")
     # --
@@ -112,7 +113,8 @@ def candidate_plot (bt, dd, dm_axis, f_axis, tsamp, sdt, fig=None, path="./"):
     axsd.axvline (sdt[1], ls='--',c='k', alpha=0.5)
     # --
     t1 = t0 + (bt.shape[1]*tsamp)
-    axbt.imshow (bt, cmap=plt.cm.jet, aspect='auto', extent=[t0, t1, dm_axis[0], dm_axis[-1]], origin='lower')
+    pbt  = block_reduce (bt, (4,4), func=np.mean)
+    axbt.imshow (pbt, cmap=plt.cm.jet, aspect='auto', extent=[t0, t1, dm_axis[0], dm_axis[-1]], origin='lower')
     # axbt.set_xlabel ("Time [s]")
     axbt.set_ylabel ("DM [pc/cc]")
     # text

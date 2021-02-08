@@ -16,31 +16,29 @@ from trishul import fdmt  as trishul_fdmt
 from trishul import incoherent as trishul_incoh
 from trishul import dedisp as trishul_dedisp
 
-from trishul import models as trishul_models
 from trishul import plot  as trishul_plots
 
 import sigpyproc as spp
-
-MODELS=['Battousai']
 
 def read_cand(c):
     if c.endswith ('cand'):
         cands = trishul_cands.read_heimdall_cands (c)
     elif c.endswith ('singlepulse'):
         cands = trishul_cands.read_presto_cands (c)
+    elif c.endswith ('csv'):
+        cands = pd.read_csv (c)
     else:
         raise ValueError("Candidate format not understood")
     return cands
 
 def parseargs():
     import argparse as arp
-    ap = arp.ArgumentParser (prog='tsinfer', description='Trishul tool for performing machine learning.', epilog='Part of Trishul')
+    ap = arp.ArgumentParser (prog='tsplot', description='Trishul tool for plotting candidates.', epilog='Part of Trishul')
     add = ap.add_argument
     add('-f,--fil', help = 'Filterbank file', dest='fil')
     add('-c,--cand', help = 'Candidate file', dest='cand', default=None)
     add('-C,--canddir', help = 'Candidate directory', dest='cdir', default=None)
     add("--dir", help='Output directory',dest='dir', default="./")
-    add("--model", help='Model ID',dest='model', default=MODELS[0], choices=MODELS)
     add('-v',help='Verbose', dest='v', action='store_true')
     return ap.parse_args ()
 
@@ -64,12 +62,8 @@ if __name__ == "__main__":
     if args.cand:
         cands = read_cand (args.cand)
     elif args.cdir:
-        ls    = glob.glob (os.path.join(args.cdir,"*_01.cand"))
+        ls    = glob.glob (os.path.join(args.cdir,"*.csv"))
         cands = pd.concat ([read_cand(x) for x in ls]).reset_index(drop=True)
-
-    # setup clf
-    clf  = trishul_models.Battousai (verbose=args.v)
-    clf.resolution (foff=foff, toff=tsamp,)
 
     #
     # DEFAULTs
@@ -77,16 +71,14 @@ if __name__ == "__main__":
     WIDTH   = 0.2 # s
     t_axis  = np.arange (0., WIDTH, tsamp)
     f_axis  = trishul_dedisp.FreqTable (fch1, foff, nchans)
-    h_dmoff = clf.dm_width / 2
+    h_dmoff = 50. / 2
 
 
     #
     # prepare pipeline
-    mask   = (cands.dm >= 345) & (cands.dm <= 352)
-    tcands = tqdm (cands.index[mask], desc='Candidates', unit='c', ascii=True)
+    tcands = tqdm (cands.index, desc='Candidates', unit='c', ascii=True)
     fdmt   = trishul_fdmt.FDMT (fch1, foff, nchans)
     fig    = plt.figure ()
-    loc    = []
 
     for idx in tcands:
         SIGMA  = cands.sigma[idx]
@@ -94,7 +86,7 @@ if __name__ == "__main__":
         TIME   = cands.time[idx]
         epoch  = (tstart + TIME*au.second).unix
         #
-        dm_axis   = np.linspace (DM-h_dmoff, DM+h_dmoff, clf.ndm)
+        dm_axis   = np.linspace (DM-h_dmoff, DM+h_dmoff, 256)
         dd_delays = trishul_dedisp.DD_Delays (DM, f_axis, tsamp)
         bt_delays = trishul_dedisp.BT_Delays (dm_axis, f_axis[0], f_axis[-1], tsamp)
 
@@ -104,39 +96,13 @@ if __name__ == "__main__":
 
         dd           = trishul_incoh.Dedisperser (fb, dd_delays)
         bt           = fdmt.Bowtie (fb, bt_delays)
-        
-        # normalize
-        bt -= bt.min()
-        bt /= bt.max()
-        dd -= dd.min()
-        dd /= dd.max()
-        #bt -= bt.mean()
-        #bt /= bt.std()
-        #dd -= dd.mean()
-        #dd /= dd.std()
-        ##
-        #bt = np.clip (bt, -3, 3)
-        #dd = np.clip (dd, -3, 3)
-        ##
-        #bt += 3
-        #bt /= 6
-        #dd += 3
-        #dd /= 6
 
-
-        decision = clf (bt, dd)
-        if decision:
-            # write another candidate file
-            loc.append (idx)
-
-            # plot
-            trishul_plots.candidate_plot (
+        # plot
+        trishul_plots.candidate_plot (
                 bt, dd, 
                 dm_axis, f_axis, tsamp,
                 (SIGMA, DM, TIME, PADDING, epoch),
                 fig=fig, path=args.dir
-            )
-            plt.clf()
+                )
+        plt.clf()
     #
-    sel_cands = cands.loc[loc]
-    sel_cands.to_csv (os.path.join(args.dir, "{0}.csv".format(os.path.basename(args.fil))), index=False)
