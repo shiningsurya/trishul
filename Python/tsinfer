@@ -1,0 +1,125 @@
+#!/usr/bin/env python
+import os
+import glob
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from tqdm import tqdm
+
+import astropy.time  as at
+import astropy.units as au
+
+# trishul imports
+from trishul import cands as trishul_cands
+from trishul import fdmt  as trishul_fdmt
+from trishul import incoherent as trishul_incoh
+from trishul import dedisp as trishul_dedisp
+
+from trishul import models as trishul_models
+from trishul import plot  as trishul_plots
+
+import sigpyproc as spp
+
+MODELS=['Battousai']
+
+def read_cand(c):
+    if c.endswith ('cand'):
+        cands = trishul_cands.read_heimdall_cands (c)
+    elif c.endswith ('singlepulse'):
+        cands = trishul_cands.read_presto_cands (c)
+    else:
+        raise ValueError("Candidate format not understood")
+    return cands
+
+def parseargs():
+    import argparse as arp
+    ap = arp.ArgumentParser (prog='tsinfer', description='Trishul tool for performing machine learning.', epilog='Part of Trishul')
+    add = ap.add_argument
+    add('-f,--fil', help = 'Filterbank file', dest='fil')
+    add('-c,--cand', help = 'Candidate file', dest='cand', default=None)
+    add('-C,--canddir', help = 'Candidate directory', dest='cdir', default=None)
+    add("--dir", help='Output directory',dest='dir', default="./")
+    add("--model", help='Model ID',dest='model', default=MODELS[0], choices=MODELS)
+    add('-v',help='Verbose', dest='v', action='store_true')
+    return ap.parse_args ()
+
+
+if __name__ == "__main__":
+    args = parseargs()
+    #
+    # create outdir if not already there
+    if not os.path.exists (args.dir):
+        os.mkdir (args.dir)
+
+    #
+    # read filterbank and candidate
+    fil = spp.FilReader (args.fil)
+    fh  = fil.header
+    tstart = at.Time (fh['tstart'], format='mjd', scale='utc')
+
+    tsamp = fh['tsamp']
+    fch1,foff,nchans  = [fh[x] for x in ['fch1', 'foff', 'nchans']]
+    #
+    if args.cand:
+        cands = read_cand (args.cand)
+    elif args.cdir:
+        ls    = glob.glob (os.path.join(args.cdir,"*_01.cand"))
+        cands = pd.concat ([read_cand(x) for x in ls]).reset_index(drop=True)
+
+    # setup clf
+    clf  = trishul_models.Battousai (verbose=args.v)
+    clf.resolution (foff=foff, toff=tsamp,)
+
+    #
+    # DEFAULTs
+    PADDING = 0.1 # s
+    WIDTH   = 0.2 # s
+    t_axis  = np.arange (0., WIDTH, tsamp)
+    f_axis  = trishul_dedisp.FreqTable (fch1, foff, nchans)
+    h_dmoff = clf.dm_width / 2
+
+
+    #
+    # prepare pipeline
+    tcands = tqdm (cands.index, desc='Candidates', unit='c', ascii=True)
+    fdmt   = trishul_fdmt.FDMT (fch1, foff, nchans)
+    fig    = plt.figure ()
+    loc    = []
+
+    for idx in tcands:
+        SIGMA  = cands.sigma[idx]
+        DM     = cands.dm[idx]
+        TIME   = cands.time[idx]
+        epoch  = (tstart + TIME*au.second).unix
+        print (f"{SIGMA}   {DM}")
+        if SIGMA == 0. or DM <= 40.:
+            continue
+        #
+        dm_axis   = np.linspace (DM-h_dmoff, DM+h_dmoff, clf.ndm)
+        dd_delays = trishul_dedisp.DD_Delays (DM, f_axis, tsamp)
+        bt_delays = trishul_dedisp.BT_Delays (dm_axis, f_axis[0], f_axis[-1], tsamp)
+
+        start_sample = int ((TIME - PADDING) / tsamp)
+        width_sample = int (WIDTH/tsamp) + bt_delays[-1] + 1
+        fb           = fil.readBlock (start_sample, width_sample)
+
+        dd           = trishul_incoh.Dedisperser (fb, dd_delays)
+        bt           = fdmt.Bowtie (fb, bt_delays)
+
+        decision = clf (bt, dd)
+        if decision:
+            # write another candidate file
+            loc.append (idx)
+
+            # plot
+            trishul_plots.candidate_plot (
+                bt, dd, 
+                dm_axis, f_axis, tsamp,
+                (SIGMA, DM, TIME, PADDING, epoch),
+                fig=fig, path=args.dir
+            )
+            plt.clf()
+    #
+    sel_cands = cands.loc[loc]
+    sel_cands.to_csv (os.path.join(args.dir, "{0}.csv".format(os.path.basename(args.fil))), index=False)

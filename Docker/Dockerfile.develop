@@ -1,0 +1,103 @@
+#
+FROM ubuntu:20.04
+
+LABEL "maintainer"="shining"
+LABEL "purpose"="for developing trishul"
+
+
+# Suppress debconf warnings
+ENV DEBIAN_FRONTEND noninteractive
+
+USER root
+RUN echo "root:root" | chpasswd && mkdir -p /root/.ssh 
+
+RUN adduser --disabled-password --gecos 'unprivileged user' trishul && \
+	echo "trishul:trishul" | chpasswd   && \
+	mkdir -p /home/trishul/.ssh     && \
+	chown -R trishul:trishul /home/trishul/.ssh
+
+
+RUN apt update && apt install -y software-properties-common && add-apt-repository universe && \
+	add-apt-repository multiverse && \
+	apt update && apt install -y \
+	build-essential binutils-dev   \
+	ftp wget curl dkms             \
+	autoconf automake libtool autotools-dev \
+	git sed grep gawk vim groff    \
+	tmux rsync parallel cmake m4   \
+	flex bison swig libbison-dev   \
+	gsl-bin libgsl-dev             \
+	pkg-config \
+	zsh make man mc mlocate lsof \
+	&& apt update
+
+# GNU CC boost
+RUN apt install -y \
+	gcc-9 g++-9 gfortran-9 fort77 f2c \
+	libboost-all-dev
+
+# libraries
+
+RUN apt install -y \
+	libcfitsio-bin libcfitsio-dev libcfitsio-doc \
+	libblas64-dev liblapack64-dev liblapacke64-dev \
+	libeigen3-dev libxml2-dev libxml2-doc \
+	libpng++-dev libpng-dev libpnglite-dev \
+	libopenblas-base libopenblas-dev \
+	libgsl-dev libgmp-dev \
+	libfftw3-bin libfftw3-dev  \
+	libglib2.0-dev libglib2.0-bin libbsd-dev \
+	libhealpix-cxx-dev libhealpix-cxx2 \
+	libyaml-cpp-dev libssl-dev libsocket++-dev libsocket++1
+
+
+# Python
+RUN apt install -y \
+	python cython python3 \
+	python3-notebook jupyter jupyter-core \
+	python3-numpy python3-numpydoc python3-matplotlib python3-pip
+
+RUN pip3 install -U                       \
+	setuptools datetime pytz bitstring      \
+	numpy scipy pandas                      \
+	matplotlib APLpy                        \
+	six h5py nose py-ubjson                 \
+	mpi4py schwimmbad joblib                \
+	scikit-learn scikit-video scikit-image  \
+	bokeh corner seaborn                    \
+	paramz peakutils                        \
+	splinter                                \
+	emcee ChainConsumer                     \
+	setuptools_scm pep517                   \
+	astropy astroplan astroquery astropy_helpers \
+	ipython psrqpy pyephem statsmodels      \
+	git+https://github.com/FRBs/sigpyproc3
+
+	# update alternatives
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.8 1 &&  \
+	update-alternatives --install /usr/bin/python python /usr/bin/python2.7 2   &&  \
+	update-alternatives --set python /usr/bin/python3.8
+
+# pytorch
+RUN pip3 install -U torch==1.7.1+cpu torchvision==0.8.2+cpu torchaudio==0.7.2 -f https://download.pytorch.org/whl/torch_stable.html
+
+# clean up
+RUN ldconfig && apt clean
+
+# install trishul
+RUN git clone https://github.com/shiningsurya/trishul.git && cd trishul/Python && python setup.py build_ext --inplace
+
+USER trishul
+
+ENV PGPLOT_DIR=/usr/lib/pgplot5                    \
+	PGPLOT_FONT=/usr/lib/pgplot5/grfont.dat \
+	PGPLOT_INCLUDES=/usr/include \
+	PGPLOT_BACKGROUND white \
+	PGPLOT_FOREGROUND black \
+	PGPLOT_DEV        /png \
+	EDITOR            vim \
+	PS1               "%f $ " \
+	PATH              "${PATH}:/trishul/Python"
+
+
+ENTRYPOINT /bin/bash

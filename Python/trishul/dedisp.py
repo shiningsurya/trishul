@@ -31,7 +31,7 @@ def ddfb (x, delays):
             ret[ichan,isamp] = x[ichan,int(isamp+delays[ichan])]
     return ret
 
-def Delays (dm, freqs, tsamp=781.25E-6):
+def DD_Delays (dm, freqs, tsamp):
     '''Delays in time index'''
     nchans = freqs.size
     ret = np.zeros (nchans, dtype=np.uint64)
@@ -55,18 +55,25 @@ def MaxDelay (dms, freqs, tsamp=781.25E-6):
         delays[i] = d * 4148.741601 * ( if12 - if02 ) / tsamp
     return delays
 
-def FreqTable (x):
+def FreqTable (fch1, foff, nchans):
     '''Handy function to create freq table'''
-    return x.fch1 + ( np.arange (x.nchans) * x.foff )
+    return fch1 + ( np.arange (nchans) * foff )
 
-def DMRanger (x, dmsize=256, dmwidth=50, return_index=True):
+def BT_Delays (dm_axis, fmax, fmin, tsamp):
+    if02 = 1./fmax/fmax
+    if12 = 1./fmin/fmin
+    delays = np.empty_like(dm_axis, dtype=np.uint32)
+    for i,d in enumerate (dm_axis):
+        delays[i] = d * 4148.741601 * ( if12 - if02 ) / tsamp
+    return delays
+
+def DMRanger (dm, freqs, dmsize=256, dmwidth=50, return_index=True, tsamp=781.25E-6):
     # get dm
-    dms = np.linspace (x.dm - 0.5*dmwidth, x.dm + 0.5*dmwidth, dmsize)
-    idm = np.searchsorted (dms, x.dm)
-    dms[idm] = x.dm
-    freqs = FreqTable (x)
+    dms = np.linspace (dm - 0.5*dmwidth, dm + 0.5*dmwidth, dmsize)
+    idm = np.searchsorted (dms, dm)
+    dms[idm] = dm
     fmin,fmax = freqs[-1], freqs[0]
-    idelays  = MaxDelay (dms, freqs)
+    idelays  = MaxDelay (dms, freqs, tsamp=tsamp)
     if return_index:
         return dms, idelays
     else:

@@ -4,20 +4,16 @@ Plotting routines
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-#try:
-#  from mpl_toolkits.mplot3d import Axes3D
-#  no_3d = False
-#  raise ImportError
-#except ImportError:
-#  no_3d = True
-no_3d = True
+import matplotlib.colors as mc
 
-from . import dedisp as tdd
-from .fbson import fscrunch
 
-def BTCPlot (bt, dm=None, t=None, fig=None):
+
+def BTC (bt=None, dm=None, t=None, fig=None):
     '''
     bt is bt array
+                bt, =dd, 
+                dm_axis=, f_axis, t_axis,
+                fil_header = fh, (SIGMA, DM, TIME)
     '''
     fig = fig or plt.figure ()
     axbt = fig.add_axes([0.1, 0.1, 0.6, 0.6])
@@ -69,90 +65,59 @@ def FBPlot (fb, freqs, times, fig=None):
     axbt.set_xlabel ("Time [s]")
     axbt.set_ylabel ("Freq [MHz]")
 
-def Candplot (fbson, dms=None, delays=None, bt=None, dd=None, fig=None):
+def candidate_plot (bt, dd, dm_axis, f_axis, tsamp, sdt, fig=None, path="./"):
     '''Candidate plot
     Arguments
     ---------
     fbson: instance of trishul.fbson.FBSON
+                bt, =dd, 
+                dm_axis=, f_axis, t_axis,
+                fil_header = fh, (SIGMA, DM, TIME, PADDING)
 
     fig: plt.figure instance
     '''
-    fig = fig or plt.figure()
-    # main computation steps
-    if dms is None or delays is None:
-        dms, delays = tdd.DMRanger (fbson)
-    if bt is None:
-        bt = tdd.BowTie (fbson, delays)
-    if dd is None:
-        dd = tdd.DedispFBSON (fbson)
-    # fscrunch step
-    dd64 = fscrunch (dd, chanout=64)
-    # aux steps
-    btimes = np.arange (bt.shape[1]) * fbson.tsamp
-    dtimes = np.arange (dd.shape[1]) * fbson.tsamp
-    dfreqs = tdd.FreqTable (fbson)
-    tslice = bt.shape[0]//2
-    try:
-        pt = fbson.tpeak
-    except:
-        _, ipt = np.where (bt == bt.max())
-        pt = ipt[0] * fbson.tsamp
-    fslice = int ( pt//fbson.tsamp )
+    if fig:
+        plt.clf()
+    else:
+        fig = plt.figure()
+    t0 = sdt[2] - sdt[3]
     # axes objects
     axdd = fig.add_subplot (2,2,3)                                                          # dedispersed filterbank
-    if not no_3d:
-      axbt = fig.add_subplot (2,2,1, sharex=axdd, projection='3d', azim=-90, elev=65)       # bow-tie plane
-    else:
-      axbt = fig.add_subplot (2,2,1, sharex=axdd)                                           # bow-tie plane
+    axbt = fig.add_subplot (2,2,1, sharex=axdd)                                             # bow-tie plane
     axst = fig.add_subplot (2,2,2)                                                          # s/n (t)
     axsd = fig.add_subplot (2,2,4)                                                          # s/n (d)
     # plotting
-    axdd.imshow (dd64, aspect='auto', extent=[dtimes[0], dtimes[-1], dfreqs[0], dfreqs[-1]], origin='lower')
+    t1 = t0 + (dd.shape[1]*tsamp)
+    axdd.imshow (dd, aspect='auto', extent=[t0, t1, f_axis[0], f_axis[-1]], origin='lower', cmap='jet', norm=mc.LogNorm())
     axdd.set_xlabel ("Time [s]")
     axdd.set_ylabel ("Freq [MHz]")
-    # axdd.set_xlim(dtimes[0], dtimes[-1])
-    axdd.set_ylim (360, 320)
     # --
-    axst.step (btimes, bt[tslice], 'k')
-    _a = max (fslice - 128,0)
-    _b = min (fslice + 128, btimes.size-1)
-    axst.set_xlim (btimes[_a], btimes[_b])
-    axst.set_xlabel ("Time [s]")
+    tslice = dm_axis.size//2
+    fslice = f_axis.size//2
+    #
+    axst.step (t0+np.arange(bt.shape[1])*tsamp, bt[tslice], 'k')
+    # axst.set_xlabel ("Time [s]")
     axst.spines['left'].set_visible (False)
     axst.spines['right'].set_visible (False)
     axst.spines['top'].set_visible (False)
     axst.set_yticks ([])
+    axst.axvline (sdt[2], ls='--',c='r', alpha=0.5)
     # --
-    axsd.step (dms, bt[:,fslice], 'r')
+    axsd.step (dm_axis, bt[:,fslice], 'r')
     axsd.set_xlabel ("DM [pc/cc]")
     axsd.set_yticks ([])
     axsd.spines['left'].set_visible (False)
     axsd.spines['right'].set_visible (False)
     axsd.spines['top'].set_visible (False)
+    axsd.axvline (sdt[1], ls='--',c='k', alpha=0.5)
     # --
-    tmesh, dmesh = np.meshgrid (btimes, dms)
-    # print ("proj=", axbt.get_proj())
-    # axbt.get_proj = lambda : np.dot (Axes3D.get_proj(axbt), np.diag([0.75,0.5,1.5,1.]))
-    if not no_3d:
-      axbt.plot_surface (tmesh, dmesh, bt, cmap=plt.cm.jet, rcount=100, ccount=100)
-      axbt.set_zticks ([])
-      axbt.zaxis.set_pane_color ((1.0,1.0,1.0,0.0))
-      axbt.xaxis.set_pane_color ((1.0,1.0,1.0,0.0))
-      axbt.yaxis.set_pane_color ((1.0,1.0,1.0,0.0))
-      axbt.xaxis._axinfo['grid']['color'] = (1,1,1,0)
-      axbt.yaxis._axinfo['grid']['color'] = (1,1,1,0)
-      axbt.zaxis._axinfo['grid']['color'] = (1,1,1,0)
-    else :
-      axbt.imshow (bt, cmap=plt.cm.jet, aspect='auto', extent=[btimes[0], btimes[-1], dms[0], dms[-1]])
-    axbt.set_xlabel ("Time [s]")
+    t1 = t0 + (bt.shape[1]*tsamp)
+    axbt.imshow (bt, cmap=plt.cm.jet, aspect='auto', extent=[t0, t1, dm_axis[0], dm_axis[-1]])
+    # axbt.set_xlabel ("Time [s]")
     axbt.set_ylabel ("DM [pc/cc]")
-    # axbt.yaxis.tick_right()
     # text
-    txtstr = "Peak Time: {0:3.2f} s".format(pt)
-    axst.text (0.9,0.90,txtstr, horizontalalignment='right', verticalalignment='top', transform=axst.transAxes, fontsize=10, color='k')
-    txtstr = "Source: {0}".format(fbson.source_name)
-    axsd.text (0.9,1.0,txtstr, horizontalalignment='right', verticalalignment='top', transform=axsd.transAxes, fontsize=10, color='r')
-    # last step
-    fig.suptitle (os.path.basename(fbson.filename))
-    fig.tight_layout()
-    
+    txtstr = "S/N: {sn:3.2f} DM: {dm:4.2f}\nUNIX: {epoch} Time: {time:4.2f}"
+    fig.suptitle (txtstr.format(sn=sdt[0], dm=sdt[1], epoch=sdt[4], time=sdt[2]))
+    fstr  = "{epoch:15.5f}_sn{sn:3.2f}_dm{dm:4.2f}.png"
+    fig.savefig (os.path.join(path, fstr.format(sn=sdt[0], dm=sdt[1], epoch=sdt[4])), bbox_inches='tight', dpi=300)
+

@@ -57,6 +57,10 @@ Makefile.inc
 #python
 __pycache__
 *.pyc
+#cython
+Python/trishul/fdmt.c
+Python/trishul/incoherent.c
+Python/trishul/fakefb.c
 
 # image
 image_detection
