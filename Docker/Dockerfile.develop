@@ -92,12 +92,12 @@ USER trishul
 ENV PGPLOT_DIR=/usr/lib/pgplot5                    \
 	PGPLOT_FONT=/usr/lib/pgplot5/grfont.dat \
 	PGPLOT_INCLUDES=/usr/include \
-	PGPLOT_BACKGROUND white \
-	PGPLOT_FOREGROUND black \
-	PGPLOT_DEV        /png \
-	EDITOR            vim \
-	PS1               "%f $ " \
-	PATH              "${PATH}:/trishul/Python"
+	PGPLOT_BACKGROUND=white \
+	PGPLOT_FOREGROUND=black \
+	PGPLOT_DEV     =  /png \
+	EDITOR         =  vim \
+	PS1            =  "%f $ " \
+	PATH           =  "${PATH}:/trishul/Python"
 
 
 ENTRYPOINT /bin/bash

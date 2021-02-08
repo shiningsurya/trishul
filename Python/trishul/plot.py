@@ -112,7 +112,7 @@ def candidate_plot (bt, dd, dm_axis, f_axis, tsamp, sdt, fig=None, path="./"):
     axsd.axvline (sdt[1], ls='--',c='k', alpha=0.5)
     # --
     t1 = t0 + (bt.shape[1]*tsamp)
-    axbt.imshow (bt, cmap=plt.cm.jet, aspect='auto', extent=[t0, t1, dm_axis[0], dm_axis[-1]])
+    axbt.imshow (bt, cmap=plt.cm.jet, aspect='auto', extent=[t0, t1, dm_axis[0], dm_axis[-1]], origin='lower')
     # axbt.set_xlabel ("Time [s]")
     axbt.set_ylabel ("DM [pc/cc]")
     # text
