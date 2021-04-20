@@ -1,0 +1,118 @@
+#!/usr/bin/env python3
+"""
+
+Originally written as fetch_h5plot.py for shiningsurya fork of FETCH repo
+
+"""
+import os
+import sys
+
+import tqdm
+
+from trishul import serialization as trishul_serialization
+
+import numpy as np
+
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as mgs
+
+DM_FAC = 4.148741601E-3
+
+def normalize(data, usemedian=True):
+    """
+    Noramlise the data by unit standard deviation and zero median
+    :param data: data
+    :return:
+    """
+    data = np.array(data, dtype=np.float32)
+    if usemedian:
+        data -= np.median (data)
+    else:
+        data -= np.mean (data)
+    data /= np.std(data)
+    return data
+
+def plotter (hf, usemedian=True):
+    """actual worker
+
+    Arguments
+    ---------
+    hf: DBSON dictionary
+    """
+    ### setup 
+    gs   = mgs.GridSpec(3, 2, width_ratios=[4.5, 0.5], height_ratios=[1, 1, 1])
+    axpp = fig.add_subplot (gs[0,0])
+    axdd = fig.add_subplot (gs[1,0])
+    axbt = fig.add_subplot (gs[2,0])
+    axtt = fig.add_subplot (gs[:,1])
+    ### data
+    dd = normalize (np.array(hf['dd'], dtype=np.float32), usemedian=usemedian)
+    bt = normalize (np.array(hf['bt'], dtype=np.float32), usemedian=usemedian)
+    ###
+    to_print = list(hf.keys())
+    to_print.remove ('bt'); to_print.remove ('dd')
+    print_this = []
+    for key in to_print:
+        print_this.append(f'{key} : {hf[key]}')
+    str_print = '\n'.join(print_this) + '\n'
+    ### meta data
+    fch1, foff, nchan, dm, cand_id, tsamp, snr, width = hf['fch1'], \
+                                                        hf['foff'], hf['nchans'], \
+                                                        hf['dm'],   hf['id'], \
+                                                        hf['tsamp'],hf['sn'],\
+                                                        hf['width']
+    wfac            = max (width//2, 1)
+    full_band_delay = DM_FAC * ( ((fch1+foff*nchan)/1E3)**-2 - (fch1/1E3)**-2 )
+    ddm             = dm * full_band_delay / tsamp / wfac 
+    ldm             = max(ddm-128,0) * tsamp * wfac / full_band_delay
+    hdm             = (ddm+128) * tsamp * wfac / full_band_delay
+    print (ldm, hdm)
+    ##
+    ts = np.linspace(-128,128,256) * tsamp* 1000 * wfac
+    ### plotting
+    axpp.step (ts, dd.mean (0), where='mid', c='k', linestyle='-')
+    axdd.imshow(dd, aspect='auto', extent=[ts[0], ts[-1], fch1, fch1 + (nchan * foff)], interpolation='none',cmap='plasma')
+    axbt.imshow(bt, aspect='auto', extent=[ts[0], ts[-1], ldm, hdm], interpolation='none', origin='lower', cmap='plasma')
+    axtt.text(0.2, 0, str_print, fontsize=14, ha='left', va='bottom', wrap=True)
+    ### labels
+    axpp.set_ylabel('Flux [a.u.]')
+    axdd.set_ylabel('Frequency [MHz]')
+    axbt.set_ylabel(r'DM [pc cm$^{-3}$]')
+    axbt.set_xlabel('Time [ms]')
+    axtt.axis('off')
+    ### sharex
+    axbt.get_shared_x_axes().join (axbt, axdd)
+    axbt.get_shared_x_axes().join (axbt, axpp)
+
+
+def parseArgs ():
+    import argparse
+    parser = argparse.ArgumentParser('tscandplot', description='Plots DBSON candidates', epilog='Part of TRISHUL')
+    parser.add_argument('-v', '--verbose', help='Be verbose', action='store_true')
+    parser.add_argument('dbson', help='DBSON candidates.', nargs='+',)
+    parser.add_argument('-O', '--odir', help='Output file directory for plots', type=str, default='./')
+    return parser.parse_args ()
+
+if __name__ == '__main__':
+    args = parseArgs ()
+    #################
+    if not os.path.exists (args.odir):
+        os.mkdir (args.odir)
+    #################
+    fig = plt.figure(figsize=(15, 8))
+    ###
+    for f in tqdm.tqdm (args.dbson, desc='cand', unit='c'):
+        bf  = os.path.basename (f)
+        pl  = trishul_serialization.read_dbson (f)
+        plotter (pl)
+        fig.savefig (os.path.join (args.odir, bf.replace('.dbson', '.png')), bbox_inches='tight')
+        fig.clf()
+        # try:
+            # plotter (pl)
+            # fig.savefig (os.path.join (args.odir, bf.replace('.dbson', '.png')), bbox_inches='tight')
+        # except:
+            # print (f"caught exception file={f}")
+        # finally:
+            # fig.clf()
+

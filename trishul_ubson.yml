@@ -1,65 +1,21 @@
 # Trishul BSON schema
 
-fbson:
-  - sn
-  - dm               # pc/cc
-  - width            # s
-  - time:
-    - peak_time      # s
-    - tpeak          # s
-    - tstart         # MJD
-    - tsamp          # s
-    - duration       # s
-  - frequency:
-    - fch1           # MHz
-    - foff           # MHz (+)
-    - nchans
-  - indices:
-    - i0             # epoch float64
-    - i1             # epoch float64
-    - epoch          # Observation start epoch
-    - nsamps         # sizeof(data)
-  - parameters:
-    - nbits
-    - antenna
-    - source_name
-    - ra
-    - dec
-    - group
-  # zero level
-  - data:
-    - fb             # packed filterbank
-
 dbson:
+  - id
+  - label            # int {-1 }
   - sn
   - dm               # pc/cc
   - width            # s
-  - time:
-    - peak_time      # s
-    - tstart         # MJD
-    - tsamp          # s
-    - nsamps         # nsamps 256?
-    - duration       # s
-  - frequency:
-    - fch1           # MHz
-    - foff           # MHz (+)
-    - nchans         # 64?
-  - indices:
-    - i0             # epoch float64
-    - i1             # epoch float64
-    - epoch          # Observation start epoch
-  - parameters:
-    - nbits
-    - antenna        # station-id
-    - source_name    # str
-    - ra             # radians
-    - dec            # radians
-    - group
-  - dms:
-    - dm1            # start DM pc/cc
-    - dmoff          # DM offset pc/cc (100/256)?
-    - ndm            # 256?
-  # zero level
+  - time             # s
+  - filname          # path
   - data:             
-    - dd             # packed dedispersed filterbank
-    - bt             # packed bowtie plane 
+    - dd             # packed dedispersed filterbank of float32
+    - bt             # packed bowtie plane of float32
+  - fil-headers:
+    - tstart         # MJD
+    - src_raj        # packed
+    - src_decj       # packed
+    - tsamp          # float
+    - nchans         # int
+    - fch1           # MHz
+    - foff           # MHz (-ive)

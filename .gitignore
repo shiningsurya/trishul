@@ -35,7 +35,6 @@ ob/*
 *.out
 *.app
 test*
-tscandplot
 tsbtplot
 tsquery
 tsfeature_lyon

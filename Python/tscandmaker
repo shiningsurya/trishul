@@ -1,0 +1,191 @@
+#!/usr/bin/env python3
+"""
+Initially written for FETCH, copied here and modified
+
+"""
+
+import os
+import gc
+
+import tqdm
+
+import numpy as np
+import pandas as pd
+
+from trishul import filterbank as trishul_filterbank
+from trishul import cands      as trishul_cands 
+from trishul import serialization as trishul_serialization
+from trishul import btdd       as trishul_btdd
+
+## kind of sucks that `scikit-image` is a dependency only because of this `block_reduce`
+from skimage.measure import block_reduce
+
+# import matplotlib.pyplot as plt
+
+print ()
+
+#############
+ODIR  = "./"
+MASK  = None
+TSIZE = 256
+DSIZE = 256
+FSIZE = 256
+#############
+
+def normalize(data, usemedian=True):
+    """
+    Noramlise the data by unit standard deviation and zero median
+    :param data: data
+    :return:
+    """
+    data = np.array(data, dtype=np.float32)
+    if usemedian:
+        data -= np.median (data)
+    else:
+        data -= np.mean (data)
+    data /= np.std(data)
+    return data
+
+def worker (packed):
+    """
+    Actual work function
+
+    Generates a candidate file designed for ML. See the ML_design.md for details
+
+    Arguments
+    ---------
+    packed:
+        filterbank filepath and candidates in a DataFrame
+
+    """
+    #####
+    fil_name, cands = packed
+    
+    # read filterbank 
+    fil     = trishul_filterbank.Filterbank (fil_name, MASK)
+    fh      = fil.h
+
+    tstart  = fh['tstart']
+    tsamp   = fh['tsamp']
+    fch1,foff,nchans  = [fh[x] for x in ['fch1', 'foff', 'nchans']]
+
+    btdd = trishul_btdd.BTDD (
+            fch1=fch1, foff=foff, nchans=nchans,
+            tsamp=tsamp, 
+            ndm=DSIZE
+    )
+
+    ## precompute filtebank header contribution
+    fh_dbson = dict(filname=os.path.basename(fil_name))
+    for k in ['src_raj','src_dej','tsamp','fch1','foff','tstart', 'nchans', 'nbits']:
+        fh_dbson[k]    = fh[k]
+
+    tcands  = tqdm.tqdm (cands.index, desc='Candidates', unit='cand')
+    for idx in tcands:
+        gc.collect ()
+        ret    = dict(**fh_dbson)
+
+        SIGMA  = cands.sigma[idx]
+        DM     = cands.dm[idx]
+        TIME   = cands.time[idx]
+        WIDTH  = cands.width_units[idx]
+
+        ## decimations while reading because speed
+        wfac   = int (max (1, WIDTH // 2))
+        ffac   = int (nchans // FSIZE)
+
+        ret['time']  = TIME
+        ret['dm']    = DM
+        ret['sn']    = SIGMA
+        ret['width'] = WIDTH
+        ret['id']    = f'cand_tstart_{tstart:.12f}_t_{TIME:.7f}_dm_{DM:.5f}_sn_{SIGMA:.5f}'
+        ret['label'] = -1
+
+        btdd (DM, wfac)
+        """
+        We need decimated 128 samples before the trigger => `128*wfac` samples before the trigger
+        we need decimated 128 samples after the trigger and after de-dispersion/bowtie
+        ==> thankfully, since we are taking care with start_slice, we just blindly take 256 samples and it will match up.
+        """
+        pre_take     = wfac * TSIZE // 2
+        post_take    = wfac * ( btdd.max_d + WIDTH + TSIZE//2 )
+
+        start_sample = int ((TIME / tsamp) - pre_take)
+        width_sample = int (pre_take + post_take)
+
+        ## check if start_sample is before the start of obs
+        if start_sample < 0:
+            width_sample = width_sample - start_sample
+            start_sample = 0
+
+
+        fb           = fil.decimated_read (start_sample, width_sample, wfac,)
+        bt,dd        = btdd.work (fb)
+
+        ## normalize
+        bt = normalize (bt)
+        dd = normalize (dd)
+
+        ## XXX We blindly slice here because we sliced carefully in the beginning
+        ret['bt'] = bt[:,:TSIZE]
+        ret['dd'] = block_reduce (dd[:,:TSIZE], (ffac, 1), func=np.mean, cval=np.median(dd))
+
+        if ret['bt'].shape != (DSIZE, TSIZE) or ret['dd'].shape != (FSIZE, TSIZE):
+            print (cands.loc[idx])
+            print (f"payload.shapes bt={ret['bt'].shape} dd={ret['dd'].shape} width={WIDTH} wfac={wfac} fb={fb.shape}")
+            raise ValueError (" Size is not matching")
+
+        # fig = plt.figure ()
+        # axes = fig.subplots (1, 2, sharex=True, sharey=True)
+        # axes[0].imshow (ret['bt'], aspect='auto', cmap='plasma', origin='lower')
+        # axes[1].imshow (ret['dd'], aspect='auto', cmap='plasma', origin='lower')
+        # plt.show ()
+        # adsfasdf
+
+        ## save
+        trishul_serialization.write_dbson (os.path.join (ODIR, ret['id']+'.dbson'), ret )
+
+    return None
+
+
+def parseArgs ():
+    import argparse
+    agp = argparse.ArgumentParser ('tscandmaker', description='TRISHUL tool to make candidates', epilog='Part of TRISHUL')
+    add = agp.add_argument
+    add ('-v','--verbose', help='Verbose', action='store_true')
+
+    add ('-c', '--cand_file', help='candidate file. It can be either HEIMDALL or PRESTO candidates.', type=str, required=True)
+    add ('-f', '--fil_file', help='filterbank file. ', type=str, required=True)
+    add ('-k', '--kill_file', help='Numpy readable kill file. ', type=str, default=None)
+
+    add ('--snlow', help='Minimum S/N', type=float, default=5.0)
+    add ('--snhigh', help='Maximum S/N', type=float, default=300.0)
+
+    add ('--dmlow', help='Minimum DM', type=float, default=0.0)
+    add ('--dmhigh', help='Maximum DM', type=float, default=2000.0)
+
+    add ('--wdlow', help='Minimum boxcar width in log2 (int)', type=int, default=1)
+    add ('--wdhigh', help='Maximum boxcar width in log2 (int)', type=int, default=30)
+
+    add ('-o', '--fout', help='Output file directory for candidates', type=str, default='./')
+
+    return agp.parse_args ()
+
+if __name__ == '__main__':
+    args = parseArgs ()
+    ODIR = args.fout
+    ####################################
+    ### read cand logic
+    cands = trishul_cands.read_cands (args.cand_file)
+
+    ### cands selection logic
+    cmask = trishul_cands.masker (cands, args.dmlow, args.dmhigh, args.snlow, args.snhigh, args.wdlow, args.wdhigh)
+    mands = pd.DataFrame (cands[cmask])
+    ####################################
+    ### kill mask logic
+    if args.kill_file is not None:
+        MASK = np.loadtxt (args.kill_file, dtype=np.uint32)
+
+    ####################################
+    ### run
+    worker ([args.fil_file, mands])

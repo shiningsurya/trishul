@@ -1,3 +1,0 @@
-"""
-Produces bowtie plane
-"""

@@ -166,8 +166,20 @@ cdef class FDMT:
         cdef Py_ssize_t dT  = self.State.shape[1]
         cdef Py_ssize_t T   = self.State.shape[2]
         return np.reshape (self.State, [dT,T])
+
+    def Bowtie_maxdt (self, np.ndarray[cf_t, ndim=2] Image, Py_ssize_t maxdt):
+        '''Computes bowtie plane from the filterbank using FDMT
+        Arguments
+        ---------
+        Image : Filterbank array with shape=(NCHAN,NSAMP)
+        delays : array of DM-delays in time units
+        '''
+        cdef Py_ssize_t nchans             = Image.shape[0]
+        cdef Py_ssize_t nsamps             = Image.shape[1]
+        cdef np.ndarray fbt                = self.__worker__(Image, maxdt)
+        return fbt
     
-    def Bowtie (self, np.ndarray[cf_t, ndim=2] Image, np.ndarray[np.uint32_t, ndim=1] delays):
+    def Bowtie_delays (self, np.ndarray[cf_t, ndim=2] Image, np.ndarray[np.uint32_t, ndim=1] delays):
         '''Computes bowtie plane from the filterbank using FDMT
         Arguments
         ---------
