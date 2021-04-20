@@ -5,9 +5,19 @@ Taken from FDMT Python implementation shared on the FDMT paper.
 ** Entire credit to Zackay & Ofek (2014) **
 
 Adapted to work with filterbank with fmax to fmin frequency axis.
+
+This is just a reference implementation worked on prior to cythonizing the code.
+
+The verbose switch is added here to elucidate the possibility that there is a linear transformation that
+does what FDMT does which ultimately implies that one can FDMT in just one pass. 
+That speedup is what we live for.
 """
 
 import numpy as np
+
+VERBOSE=True
+if VERBOSE:
+    print ("FDMT Verbose ON")
 
 
 class FDMT:
@@ -48,12 +58,19 @@ class FDMT:
                 ))
 
         self.State = np.zeros([self.F,deltaT+2,self.T],self.dtype)
+        if VERBOSE:
+            print (f"Iteration=0: State.shape={self.State.shape}")
         self.State[:,0,:] = Image
+        if VERBOSE:
+            print (f"Iteration=0: State[:,0,:] = Input")
 
         for i_dT in range(1,deltaT+1):
             self.State[:, i_dT  , i_dT:]       =    \
             self.State[:, i_dT-1, i_dT:]       +    \
             Image     [:, :-i_dT]
+
+            if VERBOSE:
+                print (f"Iteration=0: iter={i_dT} State[:,{i_dT}, {i_dT}:] = State[:,{i_dT-1},{i_dT}:] + Input[:,:-{i_dT}]")
 
     def __iteration__ (self, ii):
         self.df = 2 ** ii * self.fres
@@ -67,6 +84,8 @@ class FDMT:
             ))
         
         Output = np.zeros([F_jumps, deltaT+1, self.T],self.dtype)
+        if VERBOSE:
+            print (f"Iteration={ii}: new State.shape={Output.shape} old State.shape={self.State.shape}")
         
         for i_F in range(F_jumps):
             fstart = self.fmax - self.df * i_F 
@@ -95,6 +114,9 @@ class FDMT:
                 i_T_max = self.T
                 Output    [i_F  , i_dT  , i_T_min:i_T_max]      =    \
                 self.State[2*i_F, dT_mid, i_T_min:i_T_max]
+
+                if VERBOSE:
+                    print (f"Iteration={ii}: iter={i_dT} new.State[{i_F}, {i_dT}, {i_T_min}:{i_T_max}] = old.State[{2*i_F}, {dT_mid}, {i_T_min}:{i_T_max}]")
                 
                 
                 i_T_min = 0
@@ -102,6 +124,9 @@ class FDMT:
                 Output     [i_F    , i_dT   , i_T_min:i_T_max]                    =                    \
                 self.State [2*i_F  , dT_mid , i_T_min:i_T_max]                    +                    \
                 self.State [2*i_F+1, dT_rest, i_T_min + dT_midl:i_T_max+dT_midl]
+
+                if VERBOSE:
+                    print (f"Iteration={ii}: iter={i_dT} new.State[{i_F}, {i_dT}, {i_T_min}:{i_T_max}] = old.State[{2*i_F}, {dT_mid}, {i_T_min}:{i_T_max}] + old.State[{2*i_F+1}, {dT_rest}, {i_T_min+dT_midl}:{i_T_max+dT_midl}]")
         self.State = Output
     
     def __worker__ (self, Image, maxdt):

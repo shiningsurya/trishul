@@ -1,0 +1,78 @@
+#!/usr/bin/env python
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.colors as mc
+import matplotlib.gridspec as mgs
+from matplotlib.colors import Normalize
+import trishul.dbson as tdb
+import skimage.exposure as ske
+# zoomed
+from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes, mark_inset
+
+def parseargs():
+    import argparse as arp
+    ap = arp.ArgumentParser (prog='tsinspect', description='Trishul handy tool plotting/inspecting.', epilog='Part of Trishul')
+    add = ap.add_argument
+    add('dbson', help = 'List of dbsons', nargs='+')
+    add("--dir", help='Output directory',dest='dir', default="./inspected/")
+    add("--log", help='Log scale coloring.',dest='lognorm', action='store_true')
+    add("--64", help='Tscrunch to 64 samples.',dest='tscrunch', action='store_true')
+    add("--hist", help='Histogram equalization.',dest='histnorm', action='store_true')
+    add("--dd", help='Enables log,64,hist.',dest='dd', action='store_true')
+    add("--ext", help='Plot format',dest='ext', default="png")
+    return ap.parse_args ()
+
+if __name__ == "__main__":
+    args = parseargs ()
+    if args.dd:
+        args.lognorm = args.tscrunch = args.histnorm = True
+    if not os.path.isdir (args.dir):
+        os.mkdir (args.dir)
+    for dbs in args.dbson:
+        with tdb.DBSON (dbs) as x:
+            # data planes
+            dd = np.array (x.dd, dtype=np.float32)
+            # axes
+            dms = np.arange (x.ndm) * x.dmoff
+            dms += x.dm1
+            imdict = {'cmap':plt.cm.jet, 'aspect':'auto'}
+            if args.lognorm:
+                imdict['norm'] = mc.LogNorm()
+            freqs = np.arange (x.nchans) * x.foff
+            freqs += x.fch1
+            times = np.arange (x.nsamps) * x.tsamp
+            if args.tscrunch:
+                from skimage.measure import block_reduce
+                dd    = block_reduce (dd, (1,4), func=np.mean)
+                times = np.arange (64) * x.tsamp
+            # plotings
+            fig = plt.figure ()
+            gs  = mgs.GridSpec (5,5,figure=fig, hspace=0, wspace=0)
+            app = fig.add_subplot (gs[0,:4])
+            add = fig.add_subplot (gs[1:,:4])
+            aff = fig.add_subplot (gs[1:,4])
+            app.step (times, dd.mean(0), where='mid')
+            aff.step (dd.mean(1), freqs, where='mid')
+            if args.histnorm:
+                dd = ske.equalize_hist (dd)
+            add.imshow (dd, **imdict, extent=[times[0], times[-1], freqs[-1], freqs[0]])
+            add.set_xlabel ('Time -{0} [s]'.format(x.i0))
+            add.set_ylabel ('Freq [MHz]')
+            app.set_xticks ([])
+            aff.set_yticks ([])
+            app.set_ylabel ('Stokes I [a.u.]')
+            # aff.set_xlabel ('T [a.u.]')
+            app.get_shared_x_axes().join (app, add)
+            aff.get_shared_y_axes().join (aff, add)
+            fig.suptitle (x.filename)
+            # tight layout 
+            # fig.tight_layout()
+            # save
+            fn,_ = os.path.splitext (os.path.basename(dbs))
+            plt.savefig (
+                os.path.join (args.dir, fn+".dd"),
+                # dpi=300, 
+                format=args.ext
+            )
+

@@ -65,7 +65,7 @@ def FBPlot (fb, freqs, times, fig=None):
     axbt.set_xlabel ("Time [s]")
     axbt.set_ylabel ("Freq [MHz]")
 
-def candidate_plot (bt, dd, dm_axis, f_axis, tsamp, sdt, fig=None, path="./"):
+def candidate_plot (bt, dd, dm_axis, f_axis, tsamp, sdt, fig=None, path="./", pngfile=None):
     '''Candidate plot
     Arguments
     ---------
@@ -120,6 +120,9 @@ def candidate_plot (bt, dd, dm_axis, f_axis, tsamp, sdt, fig=None, path="./"):
     # text
     txtstr = "S/N: {sn:3.2f} DM: {dm:4.2f}\nUNIX: {epoch} Time: {time:4.2f}"
     fig.suptitle (txtstr.format(sn=sdt[0], dm=sdt[1], epoch=sdt[4], time=sdt[2]))
-    fstr  = "{epoch:15.5f}_sn{sn:3.2f}_dm{dm:4.2f}.png"
-    fig.savefig (os.path.join(path, fstr.format(sn=sdt[0], dm=sdt[1], epoch=sdt[4])), bbox_inches='tight', dpi=300)
+    if pngfile is None:
+        fstr  = "{epoch:15.5f}_sn{sn:3.2f}_dm{dm:4.2f}.png".format(sn=sdt[0], dm=sdt[1], epoch=sdt[4])
+        fig.savefig (os.path.join(path, fstr), bbox_inches='tight', dpi=300)
+    else:
+        fig.savefig (os.path.join(path, pngfile), bbox_inches='tight', dpi=300)
 

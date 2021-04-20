@@ -1,0 +1,90 @@
+#!/usr/bin/env python
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.colors as mc
+import matplotlib.gridspec as mgs
+import trishul.dbson as tdb
+import astropy.coordinates as asc
+import astropy.units as au
+
+def parseargs():
+    import argparse as arp
+    ap = arp.ArgumentParser (prog='tstplot', description='Trishul tool for trigger plot from dbson.', epilog='Part of Trishul')
+    add = ap.add_argument
+    add('dbson', help = 'List of dbsons', nargs='+')
+    add('-v', help='Verbose', action='store_true')
+    add("--dir", help='Output directory',dest='dir', default="./")
+    add("--ext", help='Plot format',dest='ext', default="png")
+    return ap.parse_args ()
+
+if __name__ == "__main__":
+    args = parseargs ()
+    for dbs in args.dbson:
+        with tdb.DBSON (dbs) as x:
+            if args.v:
+                print ("SN : {:3.2f} DM : {:3.2f}pc/cc WD : {:3.2f}ms".format(x.sn, x.dm, x.width*1e3))
+            ##############
+            # axes
+            dms = np.arange (x.ndm) * x.dmoff
+            dms += x.dm1
+            times = np.arange (x.nsamps) * x.tsamp
+            freqs = np.arange (x.nchans) * x.foff
+            freqs += x.fch1
+            #
+            CMAP = plt.cm.afmhot
+            # plotings
+            fig  = plt.figure ()
+            gs   = mgs.GridSpec (2,2, figure=fig, wspace=0.5, hspace=0.5)
+            axbt = fig.add_subplot (gs[0,0])
+            axdd = fig.add_subplot (gs[1,0])
+            axpp = fig.add_subplot (gs[0,1])
+            axbb = fig.add_subplot (gs[1,1])
+            ###
+            axbt.imshow    (x.bt, aspect='auto', origin='lower',extent=[times[0], times[-1], dms[0],   dms[-1]],   cmap=CMAP)
+            axdd.imshow    (x.dd, aspect='auto', origin='lower',extent=[times[0], times[-1], freqs[0], freqs[-1]], cmap=CMAP)
+            axpp.step   (times, x.dd.mean(0), where='mid',)
+            axbb.step   (dms, x.bt[:,128])
+            # share axes
+            axbt.get_shared_x_axes().join (axbt, axdd)
+            axbt.get_shared_x_axes().join (axbt, axpp)
+            # axbt.get_shared_y_axes().join (axbt, axbb)
+            # labels
+            axbt.set_xlabel ('Time [s]')
+            axdd.set_xlabel ('Time [s]')
+            axpp.set_xlabel ('Time [s]')
+            axbb.set_xlabel ('DM [pc/cc]')
+            ###
+            axbt.set_ylabel ('DM [pc/cc]')
+            axdd.set_ylabel ('Freq [MHz]')
+            # axpp.set_ylabel ('')
+            # axbb.set_ylabel ('DM [pc/cc]')
+            # axpp, axbb should not have bounding box
+            # titles
+            axbt.set_title ('Bowtie')
+            axdd.set_title ('De-dispersed filterbank')
+            axpp.set_title ("Time profile")
+            axbb.set_title ("DM profile")
+            ## suppress y-axis for axpp, axbb
+            axpp.set_yticks([])
+            axbb.set_yticks([])
+            #
+            title = ''
+            if x.ra and x.dec:
+                sc = asc.SkyCoord (x.ra, x.dec, unit='radian', frame='icrs')
+                ras = sc.ra.to_string (au.hourangle, fields=2)
+                decs = sc.dec.to_string (au.degree, alwayssign=True, fields=2)
+                title = "{0}\nPOS={1}{2}".format (dbs, ras, decs)
+            else:
+                title = dbs
+            fig.suptitle (title)
+            # tight layout 
+            # fig.tight_layout()
+            # save
+            fn,_ = os.path.splitext (os.path.basename(dbs))
+            plt.savefig (
+                os.path.join (args.dir, fn+".{}".format(args.ext)),
+                # dpi=300, 
+                # format=args.ext
+            )
+

@@ -82,8 +82,9 @@ if __name__ == "__main__":
 
     #
     # prepare pipeline
-    mask   = (cands.dm >= 345) & (cands.dm <= 352)
+    mask   = (cands.dm >= 50) & (cands.dm <= 80)
     tcands = tqdm (cands.index[mask], desc='Candidates', unit='c', ascii=True)
+    # tcands = tqdm (cands.index, desc='Candidates', unit='c', ascii=True)
     fdmt   = trishul_fdmt.FDMT (fch1, foff, nchans)
     fig    = plt.figure ()
     loc    = []
@@ -129,6 +130,7 @@ if __name__ == "__main__":
             # write another candidate file
             loc.append (idx)
 
+        if True:
             # plot
             trishul_plots.candidate_plot (
                 bt, dd, 

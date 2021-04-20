@@ -8,7 +8,7 @@ import sys
 
 from .fbson import fscrunch
 from .fbson import FBSON 
-from .dedisp import DedispBundle
+#from .dedisp import DedispBundle
 
 def scaler (x, flip=False):
     MIN = x.min()
@@ -62,7 +62,7 @@ def WriteDBSON (x, outdir = "./"):
 
 class DBSON(object):
     '''DBSON object'''
-    def __init__ (self, xf, dx=None, chanout=64, sampout=256):
+    def __init__ (self, xf, dx=None,):
         '''init
         Arguments
         ---------
@@ -74,8 +74,6 @@ class DBSON(object):
         '''
         if isinstance (xf, str) and xf.endswith("dbson"):
             self.__read_dbson__ (xf)
-        elif isinstance(xf, str) or  isinstance (xf, object):
-            self.__read_fbson__ (xf, dx=dx, chanout=chanout, sampout=sampout)
         else:
             raise ValueError ("Input argument should be (str,FBSON, dbson)")
 
@@ -105,79 +103,6 @@ class DBSON(object):
         _bt      = np.fromiter (x['bt'], dtype=np.uint8)
         self.dd  = np.reshape (_dd, (self.nsamps, self.nchans)).T
         self.bt  = np.reshape (_bt, (self.ndm, self.nsamps))
-
-    def __read_fbson__(self, xf, dx=None, chanout=64,sampout=256):
-        '''Read from fbson
-
-        Arguments
-        ---------
-        xf : str or FBSON
-        dx : DedispFBSON
-        '''
-        # FBSON setup
-        if isinstance (xf, str):
-            x = FBSON(xf, 1)
-        else:
-            x = xf
-        # DedispBundle setup
-        if dx is None:
-            dx = DedispBundle (x)
-        samps = min (dx.bt.shape[1], dx.dd.shape[1])
-        # processing
-        pt = 0.1  # peak_time
-        try:
-            pt = x.tpeak
-            if pt > x.duration:
-                raise ValueError 
-        except:
-            print ("[!!] DBSON::ReadFBSON didn't find tpeak.")
-            _, ipt = np.where (dx.bt == dx.bt.max())
-            pt = ipt[0] * x.tsamp
-        fslice = int ( pt//x.tsamp )
-        # crunching, slicing
-        dd64 = fscrunch (dx.dd, chanout)
-        istart = int ( fslice - ( sampout//2 ) )
-        istop  = int ( fslice + ( sampout//2 ) )
-        if istart < 0:
-            istart = 0
-        if istop > samps:
-            istop = samps-1
-        self.nsamps = istop - istart
-        if self.nsamps != sampout:
-            print ("[!!] DBSON::ReadFBSON made nsamps={0} when requested nsamps={1}.".format (self.nsamps,sampout))
-        self.duration = self.nsamps * x.tsamp
-        # putting stuff in
-        # data
-        self.dd = dd64[:,istart:istop]
-        self.bt = dx.bt[:,istart:istop]
-        # dm
-        self.dm1  = dx.dms[0]
-        self.dmoff= dx.dms[1] - dx.dms[0]
-        self.ndm  = dx.dms.size
-        # parameters
-        for k in ['ra', 'dec', 'group', 'source_name', 'antenna', 'nbits']:
-            self.__dict__[k] = x.__dict__[k]
-        # indices
-        self.epoch = x.epoch
-        for k in ['i0', 'i1', 'epoch']:
-            self.__dict__[k] = x.__dict__[k]
-        # frequency
-        self.fch1   = x.fch1
-        self.foff   = x.foff * x.nchans / chanout
-        self.nchans = chanout
-        # time
-        for k in ['tsamp','peak_time']:
-            self.__dict__[k] = x.__dict__[k]
-        cut = istart * x.tsamp
-        if pt < cut:
-            raise ValueError ("[EE] shouldn't happen error")
-        self.peak_time = pt   - cut
-        self.i0        = x.i0 + cut
-        self.i1        = self.i0 + self.duration
-        self.tstart = x.tstart
-        # last
-        for k in ['sn','dm','width','filename']:
-            self.__dict__[k] = x.__dict__[k]
 
     def __str__ (self) :
         return  \

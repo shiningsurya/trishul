@@ -6,6 +6,7 @@ Has all the functions
 from tqdm import tqdm
 from .deeputils import RunningMean, TopK, Recall_score, Precision_score
 from torch.autograd import Variable
+import torch.nn as tn
 
 
 def Trainer (model, optimizer, loss_fn, dataloader, metrics):
@@ -259,6 +260,7 @@ def AECLFEvaluatorNoCuda (model, clf, loss_fn, dataloader, metrics):
     # much easier than train bc 
     # we don't have optimization step
     clf.eval ()
+    sf = tn.Softmax()
     # main evaluation epoch loop
     tdl = tqdm (dataloader, unit="bt", desc="Evaluator")
     for i, sample_b  in enumerate (tdl):
@@ -269,11 +271,11 @@ def AECLFEvaluatorNoCuda (model, clf, loss_fn, dataloader, metrics):
         output_b, code_b  = model (eval_b)
         predict_b   = clf(code_b)
         # loss
-        loss       = loss_fn (predict_b, target_b)
+        loss       = loss_fn (predict_b, target_b.squeeze(1))
         # compute the metrics
         retmetrics['loss'].append (loss.item())
         for k, v in metrics.items():
-            retmetrics[k] ( v (predict_b, target_b) )
+            retmetrics[k] ( v (sf(predict_b), target_b) )
     # return metrics
     return retmetrics
 
