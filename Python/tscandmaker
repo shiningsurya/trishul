@@ -154,7 +154,7 @@ def parseArgs ():
     add = agp.add_argument
     add ('-v','--verbose', help='Verbose', action='store_true')
 
-    add ('-c', '--cand_file', help='candidate file. It can be either HEIMDALL or PRESTO candidates.', type=str, required=True)
+    add ('-c', '--cand_file', help='candidate file. It can be either HEIMDALL or PRESTO candidates.', type=str, required=True, nargs='+')
     add ('-f', '--fil_file', help='filterbank file. ', type=str, required=True)
     add ('-k', '--kill_file', help='Numpy readable kill file. ', type=str, default=None)
 
@@ -174,18 +174,13 @@ def parseArgs ():
 if __name__ == '__main__':
     args = parseArgs ()
     ODIR = args.fout
-    ####################################
-    ### read cand logic
-    cands = trishul_cands.read_cands (args.cand_file)
-
-    ### cands selection logic
-    cmask = trishul_cands.masker (cands, args.dmlow, args.dmhigh, args.snlow, args.snhigh, args.wdlow, args.wdhigh)
-    mands = pd.DataFrame (cands[cmask])
-    ####################################
     ### kill mask logic
     if args.kill_file is not None:
         MASK = np.loadtxt (args.kill_file, dtype=np.uint32)
-
     ####################################
     ### run
+    cands   = pd.concat ([trishul_cands.read_cands (cf) for cf in args.cand_file]).reset_index ()
+    cmask   = trishul_cands.masker (cands, args.dmlow, args.dmhigh, args.snlow, args.snhigh, args.wdlow, args.wdhigh)
+    mands   = pd.DataFrame (cands[cmask])
+    ####################################
     worker ([args.fil_file, mands])

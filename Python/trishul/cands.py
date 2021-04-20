@@ -7,7 +7,7 @@ Part of Trishul
 import numpy  as np
 import pandas as pd
 
-HEIMDALL_COLS = ['sigma','index','time','boxcar','dm_index','dm','group_id','sample_start','sample_stop']
+HEIMDALL_COLS = ['sigma','index','time','width_units','dm_index','dm','group_id','sample_start','sample_stop']
 HEIMDALL_DT_FORMATS = {
         'datetime+beam': "%Y-%m-%d-%H:%M:%S_{beam}.cand",
         'datetime': "%Y-%m-%d-%H:%M:%S.cand",
